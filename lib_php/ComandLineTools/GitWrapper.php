@@ -1,0 +1,88 @@
+<?php
+
+require_once(str_replace('//','/',dirname(__FILE__).'/') .'../Debug/libDebug.php');
+require_once(str_replace('//','/',dirname(__FILE__).'/') .'CodeControlWrapper.php');
+
+
+/* -----------------------------------------------------------------------
+ * A function to Wrapp a the git CodeControl
+ * ----------------------------------------------------------------------- */
+class GitWrapper extends CodeControlWrapper {
+	
+	function status($short = false){
+		$command = 'git status';
+		if ($short) $command .= ' -s';
+		$this->execute($command);
+	}
+	
+	function update(){
+		$this->execute('git pull');
+	}
+	
+	function commit($message, $addAll, $files = array()){
+		$this->io->out("\n> Status of the commit:");		
+		// add will print a status afterwards
+		if (! $addAll) {
+			if (count($files)) $this->add($files);
+		} else {
+			$this->add(array());
+		}
+		
+		$command = 'git commit -m "' . $message . '"';
+		
+		$this->io->out("\n> Commiting local changes...");
+		if ($this->execute($command) == 0) {
+			
+			$this->io->out("\n\n> Updating Repository...");
+			$this->update();
+			
+			$this->io->out("\n> Uploading to repository server...");
+			$this->execute('git push');
+			
+			parent::commit($message, $addAll);
+			$this->io->out("\n\n> ---------------------------------------");
+			$this->io->out("> Local status:\n");
+			$this->status();
+			$this->io->out("");
+		}
+	}
+	
+	function checkout($sources, $branch) {
+		
+		$command = 'git checkout ';
+		
+		if (count($sources) == 0) {
+			if ($branch) $command .= '-b ' . $branch;
+		} else {
+			$command .= join(' ', $sources);
+		}
+		
+		$this->execute($command);
+	}
+	
+	function add($files){
+		if (count($files) == 0) { // add . is default
+			$files[] = '.';
+		}
+		
+		$command = 'git add ' . implode(' ', $files);
+		
+		$this->execute($command);
+		$this->status(true);
+	}
+	
+	function remove($files){
+		$this->execute('git rm -f ' . implode(' ', $files));
+	}
+	
+	function merge($branch){
+		if ($this->execute('git merge ' . $branch) == 0) {
+			// uploading to remote repository
+			$this->execute('git push');
+		}
+	}
+	
+	function log($filters) {
+		$this->execute('git log');
+	}
+}
