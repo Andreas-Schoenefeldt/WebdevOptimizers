@@ -54,6 +54,8 @@
 			
 			if ($download) { // Variable to test the html generation quikly
 				$io->out('> Preparing ' . $targetWorkingFolder);
+				
+				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder);
 				if ($clearWorkingFolderOnStart) deleteFiles($targetWorkingFolder);
 				
 				
