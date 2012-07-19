@@ -58,11 +58,12 @@
 				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder, 0744, true);
 				if ($clearWorkingFolderOnStart) deleteFiles($targetWorkingFolder);
 				
+				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder, 0744, true);
 				
+				/*
 				$mountpoint = $webdavMountRoot . '/' . $webdavparts[2];
 				$io->out('> Mounting ' . $webdavUrl . ' to ' . $mountpoint);
 				if (! file_exists($mountpoint)) mkdir($mountpoint);
-				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder);
 				
 				
 				$secure = substr($webdavparts[0], 0, -1) == 'https';
@@ -71,9 +72,11 @@
 				if ($secure) $command .= '-s ';
 				$command .= $webdavUrl . ' ' . $mountpoint;
 				
+				
 				// d($command);
 				
 				$lastline = system($command, $retval);
+				
 				
 				// retry logic
 				if($retval > 0) {
@@ -92,30 +95,31 @@
 					}
 				}
 				
-				$io->out('> Coppying Files...');
-				$results = array();
+				*/	
 			}
 			
+			$io->out('> Coppying Files...');
+			$results = array();
+				
 			foreach ($logConfiguration as $layout => $config) {
 				$timestamp = mktime(0, 0, 0, date("m")  , date("d") + $config['dayoffset'], date("Y"));
 				$time = date($config['timestampformat'], $timestamp);
 				
-				$results[$layout] = array();
-				
 				for ($i = 0; $i < count($config['fileBodys']); $i++){
 					$file = str_replace('${timestamp}', $time, $config['fileBodys'][$i]) . '.' . $config['extension'];
 					$target = $targetWorkingFolder . '/' . $file;
-					if ($download) copy($mountpoint . '/' . $file, $target);
+					if ($download) download($file, $targetWorkingFolder);
 					$results[$layout][] = $target;
 				}
 			}
 			
-			
+			/*
 			if ($download) {
 				$io->out('> Unmounting ' . $mountpoint);
 				$command = 'umount -f ' . $mountpoint;
 				$lastline = system($command, $retval);
 			}
+			*/
 			
 			$htmlWorkingDir = $targetWorkingFolder . '/html';
 			if (! file_exists($htmlWorkingDir)) mkdir($htmlWorkingDir);
@@ -161,12 +165,32 @@
 		}
 	}
 	
+	function download($filename, $localWorkingDir) {
+		global $webdavUser, $webdavPswd, $webdavUrl, $io;
+		$io->out('> ----------------------------------');
+		$io->out('> Downloading ' . $filename);
+		
+		$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
+		$command =  $commandBody . '"' . $webdavUrl . '/' . $filename . '" -o "' . $localWorkingDir . '/' . $filename . '"' ;
+		
+		$lastline = system($command, $retval);
+		// retry logic
+		if($retval > 0) {
+			$io->error('Failed download ' . $filename);
+			return false;
+		}
+		
+		return true;
+	}
+	
+	
 	function upload($filename) {
 		global $webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, $io;
 		
 		$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
 		$command =  $commandBody . '-T "' . $htmlWorkingDir . '/' . $filename . '" "' . $webdavUrl . '/html/' . $filename . '"';
 		
+		$io->out('> ----------------------------------');
 		$io->out('> Uploading ' . $filename); 
 		$lastline = system($command, $retval);
 		// retry logic
