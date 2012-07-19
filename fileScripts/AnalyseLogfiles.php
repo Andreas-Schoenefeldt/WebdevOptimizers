@@ -42,7 +42,7 @@
 		$env = $params->getVal('e');
 		$class = capitalise($env) .'LogAnalyser';
 		
-		require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/' . capitalise($env) . '/' . $class . '.php');
+		require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/' . $env . '/' . $class . '.php');
 		
 		// this is a remote connection, start the remote process
 		if ($params->getVal('r')) {
