@@ -211,11 +211,9 @@ class FileAnalyser {
 		
 		
 		$fileString .= '	
-		</div>'. $navigation .'
-	</div>
-</body>
-</html>		
-		';
+		</div>'. $navigation;
+		$fileString .= '<div id="footer">Generated at ' . date('d. F Y, H:i') . '</div>';
+		$fileString .= '</div></body></html>';
 		
 		
 		fwrite ($file, utf8_encode($fileString));
