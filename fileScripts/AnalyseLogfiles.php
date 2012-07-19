@@ -4,7 +4,7 @@
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
-	
+
 	$params = new CmdParameterReader(
 		$argv,
 		array(
@@ -55,7 +55,7 @@
 			if ($download) { // Variable to test the html generation quikly
 				$io->out('> Preparing ' . $targetWorkingFolder);
 				
-				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder);
+				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder, 0744, true);
 				if ($clearWorkingFolderOnStart) deleteFiles($targetWorkingFolder);
 				
 				
