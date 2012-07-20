@@ -370,12 +370,33 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		return $alyStatus;
 	}
 	
+	function getErrorType_1($entry){
+		$errorType = explode(' ', $entry, 3);
+		array_shift($errorType);
+		return $errorType;
+	}
+	function getErrorType_2($entry){ return array($entry); }
+	
 	function extractMeaningfullData($alyStatus){
+		
+		
+		$exceptionStarts = array(
+			array(
+				'starts' => array('Wrapped '),
+				'errorType' => 'getErrorType_1'
+			),
+			array(
+				'startes' => array('No start node specified for pipeline', 'Customer password could not be updated.', 'Java constructor for'),
+				'errorType' => 'getErrorType_2'
+			)
+		);
+		
+		
 		
 		if (startsWith($alyStatus['entry'], 'Wrapped ')){
 			$errorType = explode(' ', $alyStatus['entry'], 3);
 			array_shift($errorType);
-		} else if (startsWith($alyStatus['entry'], 'No start node specified for pipeline') || startsWith($alyStatus['entry'], 'Customer password could not be updated.')){
+		} else if (startsWith($alyStatus['entry'], 'No start node specified for pipeline') || startsWith($alyStatus['entry'], 'Customer password could not be updated.') || startsWith($alyStatus['entry'] , 'Java constructor for')){
 			$errorType[] = $alyStatus['entry'];
 		} else {
 			$errorType = explode(':', $alyStatus['entry'], 2);
@@ -406,6 +427,8 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$alyStatus['errorType'] = 'Invalid Customer password update';
 				$alyStatus['data']['passwords'][substr($errorType[0], 80, -1)] = true;
 				$alyStatus['entry'] = substr($errorType[0], 0, 78);
+			} else if (startsWith($errorType[0], 'Java constructor for')){
+				$alyStatus['errorType'] = 'Java constructor not found';
 			} else {
 			
 				d($errorType);
