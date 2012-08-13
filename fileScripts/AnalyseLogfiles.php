@@ -28,6 +28,11 @@
 				'datatype' => 'Boolean',
 				'description' => 'process localy only',
 			),
+			'd' => array(
+				'name' => 'date',
+				'datatype' => 'String',
+				'description' => 'use this to put a direct date for the log processing use 6.7.2012'
+			)
 		),
 		'A script to parse a logfile and return the results in a readable form.'
 	);
@@ -102,7 +107,14 @@
 			$results = array();
 				
 			foreach ($logConfiguration as $layout => $config) {
-				$timestamp = mktime(0, 0, 0, date("m")  , date("d") + $config['dayoffset'], date("Y"));
+				
+				$splits = ($params->getVal('d')) ? explode('.', $params->getVal('d')) : array();
+				
+				$day = (count($splits) == 3) ?   $splits[0] : date("d") + $config['dayoffset'];
+				$month = (count($splits) == 3) ? $splits[1] : date("m");
+				$year = (count($splits) == 3) ?  $splits[2] : date("Y");
+				
+				$timestamp = ($params->getVal('t')) ? intval($params->getVal('t')) : mktime(0, 0, 0,  $month , $day , $year);
 				$time = date($config['timestampformat'], $timestamp);
 				
 				for ($i = 0; $i < count($config['fileBodys']); $i++){
