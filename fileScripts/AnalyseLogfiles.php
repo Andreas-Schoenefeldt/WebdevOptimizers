@@ -179,20 +179,38 @@
 	
 	function download($filename, $localWorkingDir) {
 		global $webdavUser, $webdavPswd, $webdavUrl, $io;
-		$io->out('> ----------------------------------');
-		$io->out('> Downloading ' . $filename);
 		
-		$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
-		$command =  $commandBody . '"' . $webdavUrl . '/' . $filename . '" -o "' . $localWorkingDir . '/' . $filename . '"' ;
 		
+		// check if the file exists before
+		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" -w \"%{http_code}\" -o /dev/null ";
+		$command = $commandBody . '"' . $webdavUrl . '/' . $filename . '"';
 		$lastline = system($command, $retval);
-		// retry logic
-		if($retval > 0) {
-			$io->error('Failed download ' . $filename);
-			return false;
+		
+		if ($lastline == '200') {
+		
+			$io->out('\n> ----------------------------------');
+			$io->out('> Downloading ' . $filename);
+			
+			
+			
+			
+			
+			$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
+			$command =  $commandBody . '"' . $webdavUrl . '/' . $filename . '" -o "' . $localWorkingDir . '/' . $filename . '"' ;
+			
+			$lastline = system($command, $retval);
+			// retry logic
+			if($retval > 0) {
+				$io->error('Failed download ' . $filename);
+				return false;
+			}
+			
+			return true;
+		} else {
+			$io->error('File could not be downloaded from the server. Http Status Code: ' . $lastline);
 		}
 		
-		return true;
+		return false;
 	}
 	
 	
