@@ -64,43 +64,6 @@
 				if ($clearWorkingFolderOnStart) deleteFiles($targetWorkingFolder);
 				
 				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder, 0744, true);
-				
-				/*
-				$mountpoint = $webdavMountRoot . '/' . $webdavparts[2];
-				$io->out('> Mounting ' . $webdavUrl . ' to ' . $mountpoint);
-				if (! file_exists($mountpoint)) mkdir($mountpoint);
-				
-				
-				$secure = substr($webdavparts[0], 0, -1) == 'https';
-				
-				$command = 'mount_webdav ';
-				if ($secure) $command .= '-s ';
-				$command .= $webdavUrl . ' ' . $mountpoint;
-				
-				
-				// d($command);
-				
-				$lastline = system($command, $retval);
-				
-				
-				// retry logic
-				if($retval > 0) {
-					echo ("> Retry ");
-					$trys = 1;
-					while ($retval > 0 && $trys < 10) {
-						echo ($trys . " ");
-						$lastline = system($command, $retval);
-						$trys++;
-					}
-					
-					if ($retval > 0) {
-						throw new Exception('Something went wrong with the webdav connection: ' . $lastline);
-					} else {
-						echo "Success\n";
-					}
-				}
-				
-				*/	
 			}
 			
 			$io->out('> Coppying Files...');
@@ -182,13 +145,22 @@
 		
 		
 		// check if the file exists before
-		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" -w \"%{http_code}\" -o /dev/null ";
+		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" ";
 		$command = $commandBody . '"' . $webdavUrl . '/' . $filename . '"';
-		$lastline = system($command, $retval);
+		$lines = explode("\n", trim(shell_exec($command)));
 		
-		if ($lastline == '200') {
+		// check the response header status code
+		for ($i = 0; $i < count($lines); $i++) {
+			if (startsWith($lines[$i], 'HTTP')) {
+				$codes = explode(' ', trim($lines[$i]));
+				$statuscode = $codes[1];
+				break;
+			}
+		}
 		
-			$io->out('\n> ----------------------------------');
+		if ($statuscode == '200') {
+		
+			$io->out('> ----------------------------------');
 			$io->out('> Downloading ' . $filename);
 			
 			
