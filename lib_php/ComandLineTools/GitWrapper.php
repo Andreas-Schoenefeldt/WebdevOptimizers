@@ -58,6 +58,13 @@ class GitWrapper extends CodeControlWrapper {
 		}
 		
 		$this->execute($command);
+		
+		if (count($sources) == 1 && count(explode('/', $sources[0])) == 1) {
+			// this is a branch, fetch the head
+			$command = 'git pull origin ' . $sources[0];
+			$this->execute($command);			
+		}
+		
 	}
 	
 	function add($files){

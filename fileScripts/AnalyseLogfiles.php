@@ -179,7 +179,7 @@
 			
 			return true;
 		} else {
-			$io->error('File could not be downloaded from the server. Http Status Code: ' . $lastline);
+			$io->error('File ' . $filename . ' could not be downloaded from the server. Http Status Code: ' . $statuscode);
 		}
 		
 		return false;
