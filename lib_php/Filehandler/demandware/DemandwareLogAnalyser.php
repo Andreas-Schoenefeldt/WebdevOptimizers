@@ -189,7 +189,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				if ($errorLineLayout == 'extended') $alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
 				
-				$errorsWithAdditionalLineToParse = array('Error executing script');
+				$errorsWithAdditionalLineToParse = array('Error executing script', 'Script execution timeout');
 				
 				if (in_array($alyStatus['errorType'], $errorsWithAdditionalLineToParse)) {
 					$newLine = trim(fgets($this->filePointer, 4096));
