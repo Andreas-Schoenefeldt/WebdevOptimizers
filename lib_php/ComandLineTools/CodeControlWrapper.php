@@ -54,6 +54,10 @@ class CodeControlWrapper {
 		throw new Exception('Not Implemented');
 	}
 	
+	function diff(){
+		throw new Exception('Not Implemented');
+	}
+	
 	/**
 	 *
 	 * @param Array $sources - the source repositorys used for checkout

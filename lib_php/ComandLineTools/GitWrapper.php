@@ -81,6 +81,10 @@ class GitWrapper extends CodeControlWrapper {
 		$this->status(true);
 	}
 	
+	function diff(){
+		$this->execute('git diff');
+	}
+	
 	function remove($files){
 		$this->execute('git rm -f ' . implode(' ', $files));
 	}

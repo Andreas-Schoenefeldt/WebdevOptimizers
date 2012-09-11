@@ -386,59 +386,95 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				'errorType' => 'getErrorType_1'
 			),
 			array(
-				'startes' => array('No start node specified for pipeline', 'Customer password could not be updated.', 'Java constructor for'),
+				'starts' => array('No start node specified for pipeline', 'Customer password could not be updated.', 'Java constructor for'),
 				'errorType' => 'getErrorType_2'
 			)
 		);
 		
+		$errorExceptions = array(
+			array(
+				  'start' => 'Unable to parse SEO url - no match found - {'
+				, 'type' => 'SEO url parse error'
+				, 'weight'	=> 1
+				, 'solve' => function($alyStatus){
+					$alyStatus['data']['urls'][substr($alyStatus['entry'], 44, -1)] = true;
+					$alyStatus['entry'] = 'Unable to parse SEO url - no match found';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'No start node'
+				, 'type' => 'No start node'
+				, 'weight'	=> 0
+				, 'solve' => function($alyStatus){
+					$alyStatus['data']['pipelines'][substr($alyStatus['entry'], 38, -7)] = true; // getting the pipeline
+					$alyStatus['entry'] = 'No start node specified for pipeline call.';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Customer password could not be updated.'
+				, 'type' => 'Invalid Customer password update'
+				, 'weight'	=> 0
+				, 'solve' => function($alyStatus){
+					$alyStatus['data']['passwords'][substr($errorType[0], 80, -1)] = true;
+					$alyStatus['entry'] = substr($errorType[0], 0, 78);
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Maximum number of sku(s) exceeds limit'
+				, 'type' => 'Maximum limit exceed'
+				, 'weight'	=> 0
+				, 'solve' => function($alyStatus){
+					$alyStatus['data']['limits'][substr($alyStatus['entry'], 39)] = true;
+					$alyStatus['entry'] = 'Maximum number of sku(s) exceeds limit.';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Java constructor for'
+				, 'type' => 'Java constructor'
+				, 'weight'	=> 3
+			),
+		);
 		
+		$continue = true;
 		
-		if (startsWith($alyStatus['entry'], 'Wrapped ')){
-			$errorType = explode(' ', $alyStatus['entry'], 3);
-			array_shift($errorType);
-		} else if (startsWith($alyStatus['entry'], 'No start node specified for pipeline') || startsWith($alyStatus['entry'], 'Customer password could not be updated.') || startsWith($alyStatus['entry'] , 'Java constructor for')){
-			$errorType[] = $alyStatus['entry'];
-		} else {
-			$errorType = explode(':', $alyStatus['entry'], 2);
+		for ($i = 0; $i < count($errorExceptions); $i++) {
+			if (startsWith($alyStatus['entry'], $errorExceptions[$i]['start'])) {
+				$alyStatus['errorType'] = $errorExceptions[$i]['type'];
+				if (array_key_exists('solve', $errorExceptions[$i])) $alyStatus = $errorExceptions[$i]['solve']($alyStatus);
+				$continue = false;
+				break;
+			}
 		}
 		
-		if (count($errorType) > 1) {
-			
-				$dots = explode('.', trim(str_replace(':', '', $errorType[0])));
-				
-				$alyStatus['errorType'] = trim(array_pop($dots));
-				$alyStatus['entry'] = trim($errorType[1]);
-			
-		} else {
-			
-			if (startsWith($errorType[0], 'No start node')) {
-				$alyStatus['errorType'] = 'No start node';
-				$alyStatus['data']['pipelines'][substr($alyStatus['entry'], 38, -7)] = true; // getting the pipeline
-				$alyStatus['entry'] = 'No start node specified for pipeline call.';
-			} else if (startsWith($errorType[0], 'Unable to parse SEO url')) {
-				$alyStatus['errorType'] = 'SEO url parse error';
-				$alyStatus['data']['urls'][substr($alyStatus['entry'], 44, -1)] = true;
-				$alyStatus['entry'] = 'No match found for url.';
-			} else if (startsWith($errorType[0], 'Maximum number of sku(s) exceeds limit')) {
-				$alyStatus['errorType'] = 'Maximum exceeds limit';
-				$alyStatus['data']['limits'][substr($alyStatus['entry'], 39)] = true;
-				$alyStatus['entry'] = 'Maximum number of sku(s) exceeds limit.';
-			} else if (startsWith($errorType[0], 'Customer password could not be updated.')) {
-				$alyStatus['errorType'] = 'Invalid Customer password update';
-				$alyStatus['data']['passwords'][substr($errorType[0], 80, -1)] = true;
-				$alyStatus['entry'] = substr($errorType[0], 0, 78);
-			} else if (startsWith($errorType[0], 'Java constructor for')){
-				$alyStatus['errorType'] = 'Java constructor not found';
+		if ($continue) {
+		
+			if (startsWith($alyStatus['entry'], 'Wrapped ')){
+				$errorType = explode(' ', $alyStatus['entry'], 3);
+				array_shift($errorType);
 			} else {
-			
-				d($errorType);
-				
-				$alyStatus['errorType'] = $alyStatus['entry'];
-				
+				$errorType = explode(':', $alyStatus['entry'], 2);
 			}
-		};
-		
-		
+			
+			if (count($errorType) > 1) {
+				
+					$dots = explode('.', trim(str_replace(':', '', $errorType[0])));
+					
+					$alyStatus['errorType'] = trim(array_pop($dots));
+					$alyStatus['entry'] = trim($errorType[1]);
+				
+			} else {
+				d($errorType);	
+				$alyStatus['errorType'] = $alyStatus['entry'];
+			};
+		}
 		
 		return $alyStatus;
 	}
