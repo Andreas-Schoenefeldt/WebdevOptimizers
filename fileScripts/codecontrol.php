@@ -98,6 +98,12 @@
 				
 				'description' => 'Shows the log of the repository.'
 			),
+			
+			'df' => array(
+				'name' => 'diff',
+				'datatype' => 'Boolean',
+				'description' => 'Is doing a diff on the changed code'
+ 			)
 		),
 		'Use this script to have a uniform syntax for git and svn. At the same time, your commited messages are added to the emphasize time management tool.'
 	);
@@ -160,6 +166,8 @@
 		// merge
 		} else if ($params->getVal('mg')) {
 			$cc->merge($params->getVal('mg'));
+		} else if ($params->getVal('df')) {
+			$cc->diff();
 		} else {
 			$params->print_usage();
 		}
