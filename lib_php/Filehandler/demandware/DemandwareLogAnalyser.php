@@ -184,6 +184,13 @@ class DemandwareLogAnalyser extends FileAnalyser {
 							$alyStatus['entry'] = $params[0];
 						}
 						
+						$params = explode(', SearchPhrase:', $alyStatus['entry'], 2);
+						if (count($params) > 1) {
+							$alyStatus['data']['SearchPhrases'][trim($params[1])] = true;
+							$alyStatus['entry'] = $params[0];
+						}
+						
+						
 						break;
 				}
 				
