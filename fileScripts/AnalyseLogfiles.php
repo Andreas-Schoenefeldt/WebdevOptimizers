@@ -32,6 +32,18 @@
 				'name' => 'date',
 				'datatype' => 'String',
 				'description' => 'use this to put a direct date for the log processing use 6.7.2012'
+			),
+			'ts' => array(
+				'name' => 'timeframeStart',
+				'datatype' => 'String',
+				'default' => '0:00',
+				'description' => 'a time before this the logs are ignored. Write as h:mm in 24h format'
+			),
+			'te' => array(
+				'name' => 'timeframeEnd',
+				'datatype' => 'String',
+				'default' => '24:00',
+				'description' => 'a time after this the logs are ignored. Write as h:mm in 24h format'
 			)
 		),
 		'A script to parse a logfile and return the results in a readable form.'
@@ -40,7 +52,7 @@
 	
 	$files = $params->getFiles();
 	
-	if(! $params->getVal('r') && count($files) == 0){
+	if(! $params->getVal('r') && count($files) == 0 && ! $params->getVal('l')){
 		$params->print_usage();
 	} else {
 		
@@ -50,7 +62,7 @@
 		require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/' . $env . '/' . $class . '.php');
 		
 		// this is a remote connection, start the remote process
-		if ($params->getVal('r')) {
+		if ($params->getVal('r') || $params->getVal('l')) {
 			
 			require_once(str_replace('//','/',dirname(__FILE__).'/') .'AnalyseLogfiles/config.php');
 			
@@ -111,8 +123,15 @@
 				<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script><script src="app.js" type="text/javascript"></script><link href="style.css" type="text/css" rel="stylesheet">
 				</head><body><div class="page"><h1>'.$title.'</h1>');
 			
+			$settings = array(
+				  'from' => $params->getVal('ts')
+				, 'to' => $params->getVal('te')
+				, 'timestamp' => $timestamp
+				, 'timezoneOffset' => 0
+			);
+			
 			foreach ($results as $layout => $files) {
-				$analyser = new $class($files, $layout);
+				$analyser = new $class($files, $layout, $settings);
 				
 				$analyser->setWorkingDir($htmlWorkingDir);
 				$analyser->setTime($timestamp);
@@ -136,7 +155,7 @@
 			
 		} else {
 			$analyser = new $class($files, 'error');
-				$analyser->printResults();
+			$analyser->printResults();
 		}
 	}
 	
@@ -162,11 +181,6 @@
 		
 			$io->out('> ----------------------------------');
 			$io->out('> Downloading ' . $filename);
-			
-			
-			
-			
-			
 			$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
 			$command =  $commandBody . '"' . $webdavUrl . '/' . $filename . '" -o "' . $localWorkingDir . '/' . $filename . '"' ;
 			

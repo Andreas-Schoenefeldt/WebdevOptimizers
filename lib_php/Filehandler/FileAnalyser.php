@@ -21,15 +21,24 @@ class FileAnalyser {
 	var $entrys = array(); // an entry of a file array( 'entry text' => array( count => Int, line => line, fileIdent => fileIndex))
 	var $errorcount = 0;
 	var $allerrorscount = 0;
+	
+	var $settings = array('from' => null, 'to'=> null, 'timestamp' => null, 'timezoneOffset' => 2, 'from_human', 'to_human');
 
-	function __construct($files, $environment, $layout)  {
+	function __construct($files, $environment, $layout, $settings)  {
 		$this->io = new CmdIO();
 		$this->files = $files;
 		$this->environment = $environment;
 		$this->layout = $layout;
 		
-		// get the file
+		// calculate the timeframes
+		$this->settings['from_human'] = $settings['from'];
+		$this->settings['to_human'] = $settings['to'];
+		if (array_key_exists('timezoneOffset', $settings)) $this->settings['timezoneOffset'] = $settings['timezoneOffset'];
+		$this->settings['timestamp'] = $settings['timestamp'];
+		$this->settings['from'] = $settings['timestamp'] + $this->getSecondsFromHoure($settings['from']);
+		$this->settings['to'] = $settings['timestamp'] + $this->getSecondsFromHoure($settings['to']);
 		
+		// get the file
 		for ($i = 0; $i < count($this->files); $i++) {
 			
 			$filename = $this->files[$i]; 
@@ -46,6 +55,16 @@ class FileAnalyser {
 				$this->io->error("File $filename does not exist");
 			}	
 		}
+	}
+	
+	// function to convert "h:mm" to seconds
+	function getSecondsFromHoure($houreString){
+		$parts = explode(':', $houreString, 2);
+		$hours = intval(trim($parts[0])) + 2 - $this->settings['timezoneOffset']; // two is the MEZ timezone offset
+		$minutes = intval(trim($parts[1]));
+		
+		// return the second value
+		return $hours * 3600 + $minutes * 60;
 	}
 	
 	function getAllErrorCount() {		return $this->allerrorscount;	}
@@ -71,25 +90,28 @@ class FileAnalyser {
 	}
 	
 	
-	function addEntry($type, $key, $lineNumber, $fileIdent, $data, $stacktrace) {
+	function addEntry($timestamp, $type, $key, $lineNumber, $fileIdent, $data, $stacktrace) {
 		
-		$key = str_replace(array("\n", "\r"), '' , $key);
-		
-		if (! array_key_exists($key, $this->entrys)){
-			$this->entrys[$key] = array('count' => 0, 'type' => $type, 'line' => $lineNumber, 'fileIdent' => $fileIdent, 'data' => array(), 'stacktrace' => $stacktrace);
-			$this->errorcount++; // errors +1
+		if ($timestamp >= $this->settings['from'] && $timestamp <= $this->settings['to']) {
+			
+			$key = str_replace(array("\n", "\r"), '' , $key);
+			
+			if (! array_key_exists($key, $this->entrys)){
+				$this->entrys[$key] = array('count' => 0, 'type' => $type, 'line' => $lineNumber, 'fileIdent' => $fileIdent, 'data' => array(), 'stacktrace' => $stacktrace);
+				$this->errorcount++; // errors +1
+			}
+			
+			if ($lineNumber < $this->entrys[$key]['line']) {
+				$this->entrys[$key]['line'] = $lineNumber;
+				$this->entrys[$key]['fileIdent'] = $fileIdent;
+				$this->entrys[$key]['stacktrace'] = $stacktrace;
+			}
+			
+			$this->entrys[$key]['count']++;
+			$this->entrys[$key]['data'] = array_merge_recursive($this->entrys[$key]['data'], $data);
+			
+			$this->allerrorscount++;
 		}
-		
-		if ($lineNumber < $this->entrys[$key]['line']) {
-			$this->entrys[$key]['line'] = $lineNumber;
-			$this->entrys[$key]['fileIdent'] = $fileIdent;
-			$this->entrys[$key]['stacktrace'] = $stacktrace;
-		}
-		
-		$this->entrys[$key]['count']++;
-		$this->entrys[$key]['data'] = array_merge_recursive($this->entrys[$key]['data'], $data);
-		
-		$this->allerrorscount++;
 	}
 	
 	function printResults($format = 'cmd'){
@@ -149,7 +171,7 @@ class FileAnalyser {
 		
 		$file = fopen($filepath, 'w');
 		
-		$title = $this->layout . ' logs overview - ' . date('d.m.Y', $this->timestamp);
+		$title = $this->layout . ' logs overview - ' . date('d.m.Y', $this->timestamp) .' from ' . $this->settings['from_human'] . ' to ' . $this->settings['to_human'] . ' GMT + ' . $this->settings['timezoneOffset'];
 		
 		$navigation = '<div class="navigation"><a href="index.html">back to overview</a></div>';
 		

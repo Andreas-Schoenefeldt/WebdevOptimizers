@@ -7,13 +7,13 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	
 	var $cartridgePath = array(); // the cartridgepath in order of inclusion
 	
-	function __construct($file, $layout)  {
-		parent::__construct($file, 'demandware', $layout);
+	function __construct($file, $layout, $settings)  {
+		parent::__construct($file, 'demandware', $layout, $settings);
 	}
 	
 	function analyse($fileIdent){
 		
-		$alyStatus = array('errorType' => '-', 'enter' => true, 'stacktrace' => '', 'lineNumber' => 1, 'fileIdent' => $fileIdent, 'add' => false);
+		$alyStatus = array('timestamp' => $this->settings['timestamp'], 'errorType' => '-', 'enter' => true, 'stacktrace' => '', 'lineNumber' => 1, 'fileIdent' => $fileIdent, 'add' => false);
 		
 		while ($line = fgets($this->filePointer, 4096)) {
 		
@@ -35,7 +35,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			}
 			
 			if ($alyStatus['add']) {
-				$this->addEntry($alyStatus['errorType'], $alyStatus['entry'], $alyStatus['entryNumber'], $alyStatus['fileIdent'], $alyStatus['data'], $alyStatus['stacktrace']);
+				$this->addEntry($alyStatus['timestamp'], $alyStatus['errorType'], $alyStatus['entry'], $alyStatus['entryNumber'], $alyStatus['fileIdent'], $alyStatus['data'], $alyStatus['stacktrace']);
 			
 				$alyStatus['enter'] = true;
 				$alyStatus['stacktrace']  = '';
@@ -59,6 +59,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$errorLineLayout = 'extended';
 				$parts = explode(']', substr($line, 29), 2);
 				$alyStatus['data']['dates'][substr($line, 1, 10)] = true;
+				$alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$alyStatus['data']['GMT timestamps'][substr($line, 11, 9)] = true;
 			} else {
 				$errorLineLayout = 'core_extract';
@@ -137,6 +138,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				$parts = (count($parts) > 1) ? $parts : explode(' custom  ', $line); // this is a message comming form Logger.error
 				
+				$alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$alyStatus['data']['dates'][substr($line, 1, 10)] = true;
 				$alyStatus['data']['GMT timestamps'][substr($line, 11, 9)] = true;
 			} else {
@@ -246,6 +248,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			
 			if ($isExtended) {
 				$errorLineLayout = 'extended';
+				$alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$alyStatus['data']['dates'][substr($line, 1, 10)] = true;
 				$alyStatus['data']['GMT timestamps'][substr($line, 11, 9)] = true;
 				$parts = explode(' "', $line, 2);
