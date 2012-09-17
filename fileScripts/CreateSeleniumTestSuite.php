@@ -185,7 +185,7 @@
 				$fileName = $this->getFilename();
 				
 				$c = $count . ''; $add = '';
-				while (strlen($add) < strlen($c) - strlen(($i + 1) . '')) {
+				while (strlen($add) < strlen($c) - strlen($i . '')) {
 					$add .= '0';
 				}
 				
@@ -241,7 +241,7 @@
 					fwrite($file, '		</tbody></table></body></html>');
 					fclose($file);
 					
-					$line = "\n".'<tr><td><a href="' . $fileName . '">' . $add . ($i + 1) . $conf['name'] . '</a></td></tr>';
+					$line = "\n".'<tr><td><a href="' . $fileName . '">' . $add . $i . $conf['name'] . '</a></td></tr>';
 					fwrite($location['suiteFiles'][0]['fileHandler'], $line);
 					if (in_array($i, $this->smoketests)) {
 						fwrite($location['suiteFiles'][1]['fileHandler'], $line);

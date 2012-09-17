@@ -13,7 +13,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	
 	function analyse($fileIdent){
 		
-		$alyStatus = array('enter' => true, 'stacktrace' => '', 'lineNumber' => 1, 'fileIdent' => $fileIdent, 'add' => false);
+		$alyStatus = array('errorType' => '-', 'enter' => true, 'stacktrace' => '', 'lineNumber' => 1, 'fileIdent' => $fileIdent, 'add' => false);
 		
 		while ($line = fgets($this->filePointer, 4096)) {
 		
@@ -25,6 +25,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				case 'error':
 					$alyStatus = $this->analyse_error_line($alyStatus, $line);
 					break;
+				case 'customwarn':
 				case 'customerror':
 					$alyStatus = $this->analyse_customerror_line($alyStatus, $line);
 					break;
@@ -154,26 +155,36 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					default:
 						$alyStatus['entry'] = $alyStatus['entry'];
 						break;
+					case 'SendOgoneDeleteAuthorization.ds':
 					case 'SendOgoneAuthorization.ds':
 					case 'SendOgoneCapture.ds':
 					case 'SendOgoneRefund.ds':
 						
-						$params = explode(', OrderNo:', $alyStatus['entry'], 2);
+						$params = explode(' OrderNo:', $alyStatus['entry'], 2);
 						
 						// d($alyStatus['errorType']);
 						// d($params);
-						
-						$alyStatus['entry'] = $params[0];
-						$params = explode(',', $params[1]);
-						
-						// d($params);
-						
-						$alyStatus['data']['order numbers'][trim($params[0])] = true;
-						
-						for ($i = 1; $i < count($params); $i++) {
-							$parts = explode(':', $params[$i],2);
-							$alyStatus['data'][trim($parts[0])][trim($parts[1])] = true;
+						if (count($params) > 1) {
+							$alyStatus['entry'] = substr($params[0], 0, -1);
+							$params = explode(',', $params[1]);
+							
+							// d($params);
+							
+							$alyStatus['data']['order numbers'][trim($params[0])] = true;
+							
+							for ($i = 1; $i < count($params); $i++) {
+								$parts = explode(':', $params[$i],2);
+								$alyStatus['data'][trim($parts[0])][trim($parts[1])] = true;
+							}
 						}
+						
+						$startStr = 'Capture successfully for Order ';
+						if (startsWith($alyStatus['entry'], $startStr)) {
+							
+							$alyStatus['data']['order numbers'][trim(substr($alyStatus['entry'], strlen($startStr)))] = true;
+							$alyStatus['entry'] = trim($startStr);
+						}
+						
 						break;
 					case 'sopaVideos.ds':
 						
@@ -488,33 +499,81 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	
 	function extractMeaningfullCustomData($alyStatus){
 		
-		
-		$errorType = explode(':', $alyStatus['entry'], 2);
-		$errorType[0] = trim($errorType[0]);
-		
-		if (count($errorType) > 1 && trim($errorType[1]) != '') {
+		$errorExceptions = array(
+			array(
+				  'start' => 'Error executing script'
+				, 'type' => 'Error executing script'
+				, 'weight'	=> 1
+				, 'solve' => function($alyStatus){
+					$alyStatus['entry'] = substr($alyStatus['entry'], 23);
+					return $alyStatus;
+				}
+			),
 			
-			if (startsWith($errorType[0], 'Exception while evaluating script expression')){
-				$alyStatus['errorType'] = 'Script Exception';
-				$alyStatus['entry'] = $errorType[1]; // substr($errorType[0], 45) . 
-			} else if (startsWith($errorType[0], 'Error executing script')) {
-				$alyStatus['errorType'] = 'Error executing script';
-				$alyStatus['entry'] = substr($alyStatus['entry'], 23) . ' ';
-			} else {
-				$alyStatus['entry'] = trim($errorType[1]);
-				$errorType = (startsWith($errorType[0], 'org.')) ? explode('.', $errorType[0]) : explode(' ', $errorType[0]) ;
-				$alyStatus['errorType'] = array_pop($errorType);
+			array(
+				  'start' => 'Timeout while executing script'
+				, 'type' => 'Script execution timeout'
+				, 'weight' => 1
+				, 'solve' => function($alyStatus){
+					$alyStatus['entry'] = substr($alyStatus['entry'], 23);
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Unknown category ID'
+				, 'type' => 'Unknown category ID'
+				, 'weight' => 1
+				, 'solve' => function($alyStatus){
+					$entry = explode('Unknown category ID ', $alyStatus['entry'], 2);
+					$entry = explode(' ', $entry[1], 2);
+					
+					$alyStatus['data']['Category IDs'][trim($entry[0])] = true;
+					$alyStatus['entry'] = 'Unknown category ID ' . $entry[1];
+					
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Timeout while executing script'
+				, 'type' => 'Script execution timeout'
+				, 'weight' => 1
+			)
+		);
+		
+		$continue = true;
+		
+		for ($i = 0; $i < count($errorExceptions); $i++) {
+			if (startsWith($alyStatus['entry'], $errorExceptions[$i]['start'])) {
+				$alyStatus['errorType'] = $errorExceptions[$i]['type'];
+				if (array_key_exists('solve', $errorExceptions[$i])) $alyStatus = $errorExceptions[$i]['solve']($alyStatus);
+				$continue = false;
+				break;
 			}
-		} else {
+		}
+		
+		if ($continue) {
+		
+			// 'Unknown category ID'
 			
-			if (startsWith($errorType[0], 'Error executing script')) {
-				$alyStatus['errorType'] = 'Error executing script';
-				$alyStatus['entry'] = substr($alyStatus['entry'], 23) . ' ';
-			} else if (startsWith($errorType[0], 'Timeout while executing script')) {
-				$alyStatus['errorType'] = 'Script execution timeout';
+			$errorType = explode(':', $alyStatus['entry'], 2);
+			$errorType[0] = trim($errorType[0]);
+			
+			if (count($errorType) > 1 && trim($errorType[1]) != '') {
 				
+				if (startsWith($errorType[0], 'Exception while evaluating script expression')){
+					$alyStatus['errorType'] = 'Script Exception';
+					$alyStatus['entry'] = $errorType[1]; // substr($errorType[0], 45) . 
+				} else if (startsWith($errorType[0], 'Error executing script')) {
+					$alyStatus['errorType'] = 'Error executing script';
+					$alyStatus['entry'] = substr($alyStatus['entry'], 23) . ' ';
+				} else {
+					$alyStatus['entry'] = trim($errorType[1]);
+					$errorType = (startsWith($errorType[0], 'org.')) ? explode('.', $errorType[0]) : explode(' ', $errorType[0]) ;
+					$alyStatus['errorType'] = array_pop($errorType);
+				}
 			} else {
-			
 				d($alyStatus['entry']);
 				$alyStatus['entry'] = $alyStatus['entry'];
 			}
