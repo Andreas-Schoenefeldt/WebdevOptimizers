@@ -188,6 +188,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 						}
 						
 						break;
+					case 'soapNews.ds':
 					case 'sopaVideos.ds':
 						
 						$params = explode('; Url: ', $alyStatus['entry'], 2);
