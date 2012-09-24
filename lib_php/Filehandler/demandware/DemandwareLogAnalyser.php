@@ -161,6 +161,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					case 'SendOgoneAuthorization.ds':
 					case 'SendOgoneCapture.ds':
 					case 'SendOgoneRefund.ds':
+					case 'OgoneError':
 						
 						$params = explode(' OrderNo:', $alyStatus['entry'], 2);
 						
@@ -178,6 +179,17 @@ class DemandwareLogAnalyser extends FileAnalyser {
 								$parts = explode(':', $params[$i],2);
 								$alyStatus['data'][trim($parts[0])][trim($parts[1])] = true;
 							}
+						}
+						
+						$params = explode(' Seconds since start:', $alyStatus['entry'], 2);
+						
+						if (count($params) > 1) {
+							$alyStatus['entry'] = substr($params[0], 0, -1);
+							$params = explode(',', $params[1]);
+							
+							// d($params);
+							
+							$alyStatus['data']['Seconds since start'][trim($params[1])] = true;
 						}
 						
 						$startStr = 'Capture successfully for Order ';
