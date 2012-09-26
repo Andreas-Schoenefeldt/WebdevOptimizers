@@ -132,6 +132,8 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			$alyStatus['stacktrace'] .= $line;
 			$alyStatus['add'] = true;
 			
+			$parseSecondLine = false;
+			
 			if (substr($line, 0, 1) == '[' && substr($line, 25, 4) == 'GMT]') {
 				$errorLineLayout = 'extended';
 				$parts = explode('== custom', $line, 2);
@@ -163,41 +165,9 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					case 'SendOgoneRefund.ds':
 					case 'OgoneError':
 						
-						$params = explode(' OrderNo:', $alyStatus['entry'], 2);
+						$alyStatus = $this->parseOgoneError($alyStatus, $alyStatus['entry']);
 						
-						// d($alyStatus['errorType']);
-						// d($params);
-						if (count($params) > 1) {
-							$alyStatus['entry'] = substr($params[0], 0, -1);
-							$params = explode(',', $params[1]);
-							
-							// d($params);
-							
-							$alyStatus['data']['order numbers'][trim($params[0])] = true;
-							
-							for ($i = 1; $i < count($params); $i++) {
-								$parts = explode(':', $params[$i],2);
-								$alyStatus['data'][trim($parts[0])][trim($parts[1])] = true;
-							}
-						}
-						
-						$params = explode(' Seconds since start:', $alyStatus['entry'], 2);
-						
-						if (count($params) > 1) {
-							$alyStatus['entry'] = substr($params[0], 0, -1);
-							$params = explode(',', $params[1]);
-							
-							// d($params);
-							
-							$alyStatus['data']['Seconds since start'][trim($params[1])] = true;
-						}
-						
-						$startStr = 'Capture successfully for Order ';
-						if (startsWith($alyStatus['entry'], $startStr)) {
-							
-							$alyStatus['data']['order numbers'][trim(substr($alyStatus['entry'], strlen($startStr)))] = true;
-							$alyStatus['entry'] = trim($startStr);
-						}
+						if (endsWith($alyStatus['entry'], 'RequestUrl:')) $parseSecondLine = true;
 						
 						break;
 					case 'soapNews.ds':
@@ -224,17 +194,26 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				$errorsWithAdditionalLineToParse = array('Error executing script', 'Script execution timeout');
 				
-				if (in_array($alyStatus['errorType'], $errorsWithAdditionalLineToParse)) {
+				if (in_array($alyStatus['errorType'], $errorsWithAdditionalLineToParse) || $parseSecondLine) {
 					$newLine = trim(fgets($this->filePointer, 4096));
 					$alyStatus['stacktrace'] .= $newLine;
 					$alyStatus['lineNumber']++;
-				}
-				
-				// get aditional information from the next line
-				switch ($alyStatus['errorType']) {
-					case 'Error executing script':
-						$alyStatus['entry'] .= ' ' . $newLine;
-						break;
+					
+					$newLine = trim($newLine);
+					
+					// get aditional information from the next line
+					switch ($alyStatus['errorType']) {
+						case 'Error executing script':
+							$alyStatus['entry'] .= ' ' . $newLine;
+							break;
+						case 'SendOgoneDeleteAuthorization.ds':
+						case 'SendOgoneAuthorization.ds':
+						case 'SendOgoneCapture.ds':
+						case 'SendOgoneRefund.ds':
+						case 'OgoneError':
+							$alyStatus = $this->parseOgoneError($alyStatus, $newLine);
+							break;
+					}
 				}
 				
 			} else {
@@ -247,6 +226,89 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		
 		return $alyStatus;
 	}
+	
+	function parseOgoneError($alyStatus, $line){
+		
+		$params = explode(' OrderNo:', $line, 2);
+						
+		// d($alyStatus['errorType']);
+		// d($params);
+		if (count($params) > 1) {
+			$line = substr($params[0], 0, -1);
+			$params = explode(',', $params[1]);
+			
+			// d($params);
+			
+			$alyStatus['data']['order numbers'][trim($params[0])] = true;
+			
+			for ($i = 1; $i < count($params); $i++) {
+				$parts = explode(':', $params[$i],2);
+				$alyStatus['data'][trim($parts[0])][trim($parts[1])] = true;
+			}
+		}
+		
+		$params = explode(' Seconds since start:', $line, 2);
+		
+		if (count($params) > 1) {
+			
+			$line = substr($params[0], 0, -1);
+			// $params = explode(',', $params[1], 2);
+			// d($params);
+			
+			$alyStatus['data']['Seconds since start'][trim($params[1])] = true;
+		}
+		
+		$startStr = 'Capture successfully for Order ';
+		if (startsWith($line, $startStr)) {
+			
+			$alyStatus['data']['order numbers'][trim(substr($line, strlen($startStr)))] = true;
+			$line = trim($startStr);
+		}
+		
+		// split the ogone Url
+		$start = 'https://secure.ogone.com';
+		if (startsWith($line, $start)) {
+			
+			$exceptions = array('java.net.SocketTimeoutException: Read timed out');
+			$parseURL = true;
+			
+			for($i = 0; $i < count($exceptions); $i++){
+				if (strrpos($alyStatus['entry'], $exceptions[$i]) > -1) {
+					$line = $exceptions[$i]; // line is now the error message
+					$parseURL = false;
+					break;
+				}	
+			}
+			
+			if ($parseURL) {
+				
+				$parts = explode('; OgoneError: ', $line, 2);
+				$url = explode('?', $parts[0]);
+				$params = explode('&', $url[1]);
+				
+				$line = 'OgoneError: ' . $parts[1];
+				
+				for ($i = 0; $i < count($params); $i++) {
+					$patlets = explode('=', $params[$i], 2);
+					
+					switch ($patlets[0]) {
+						case 'PM':
+						case 'AMOUNT':
+						case 'OWNERTOWN':
+						case 'OPERATION':
+						case 'FLAG3D':
+							$alyStatus['data'][$patlets[0]][trim($patlets[1])] = true;
+							break;
+					}
+				}
+			}
+		}
+		
+		$alyStatus['entry'] = $line;
+		
+		return $alyStatus;
+	}
+	
 	
 	function analyse_error_line($alyStatus, $line){
 			
