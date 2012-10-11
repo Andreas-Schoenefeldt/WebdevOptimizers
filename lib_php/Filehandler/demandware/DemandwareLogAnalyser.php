@@ -188,6 +188,25 @@ class DemandwareLogAnalyser extends FileAnalyser {
 						
 						
 						break;
+					case 'COPlaceOrder-Start':
+					case 'COPlaceOrder-HandleAsyncPaymentEntry':
+						
+						$params = explode(', OrderNo: ', $alyStatus['entry'], 2);
+						if (count($params) > 1) {
+							$alyStatus['data']['Order Numbers']['#' . trim($params[1])] = true;
+							$alyStatus['entry'] = $params[0];
+						}
+						
+						break;
+					case 'Ogone-Declined':
+						
+						$params = explode('CustomerNo: ', $alyStatus['entry'], 2);
+						if (count($params) > 1) {
+							$alyStatus['data']['Customer Numbers']['#' . trim($params[1])] = true;
+							$alyStatus['entry'] = $params[0];
+						}
+						
+						break;
 				}
 				
 				if ($errorLineLayout == 'extended') $alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
@@ -239,7 +258,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			
 			// d($params);
 			
-			$alyStatus['data']['order numbers'][trim($params[0])] = true;
+			$alyStatus['data']['order numbers']['#' . trim($params[0])] = true;
 			
 			for ($i = 1; $i < count($params); $i++) {
 				$parts = explode(':', $params[$i],2);
@@ -261,7 +280,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		$startStr = 'Capture successfully for Order ';
 		if (startsWith($line, $startStr)) {
 			
-			$alyStatus['data']['order numbers'][trim(substr($line, strlen($startStr)))] = true;
+			$alyStatus['data']['order numbers']['#' . trim(substr($line, strlen($startStr)))] = true;
 			$line = trim($startStr);
 		}
 		
@@ -269,7 +288,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		$start = 'https://secure.ogone.com';
 		if (startsWith($line, $start)) {
 			
-			$exceptions = array('java.net.SocketTimeoutException: Read timed out');
+			$exceptions = array('java.net.SocketTimeoutException: Read timed out', 'Error connecting to Ogone Direct Link. Return Code: 404');
 			$parseURL = true;
 			
 			for($i = 0; $i < count($exceptions); $i++){
@@ -293,11 +312,13 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					
 					switch ($patlets[0]) {
 						case 'PM':
-						case 'AMOUNT':
 						case 'OWNERTOWN':
 						case 'OPERATION':
 						case 'FLAG3D':
 							$alyStatus['data'][$patlets[0]][trim($patlets[1])] = true;
+							break;
+						case 'AMOUNT':
+							$alyStatus['data'][$patlets[0]][  substr(trim($patlets[1]), 0, -2) . '.' . substr(trim($patlets[1]), -2)] = true;
 							break;
 					}
 				}
