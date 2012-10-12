@@ -108,10 +108,29 @@ class FileAnalyser {
 			}
 			
 			$this->entrys[$key]['count']++;
-			$this->entrys[$key]['data'] = array_merge_recursive($this->entrys[$key]['data'], $data);
+			$this->entrys[$key]['data'] = $this->mergeAndUpcCuntArray($this->entrys[$key]['data'], $data);
 			
 			$this->allerrorscount++;
 		}
+	}
+	
+	/**
+	 *	A function that weill actualy count the occurences of the array. true is counted as 1
+	 */
+	function mergeAndUpcCuntArray($mergTo, $takeFrom) {
+		
+		foreach ($takeFrom as $key => $valueArr) {
+			foreach ($valueArr as $data => $count) {
+				$count = ($count === true) ? 1 : $count;
+				if (array_key_exists($key, $mergTo) && array_key_exists($data, $mergTo[$key])){
+					$mergTo[$key][$data] += $count;
+				} else {
+					$mergTo[$key][$data] = $count;
+				}
+			}
+		}
+		
+		return $mergTo;
 	}
 	
 	function printResults($format = 'cmd'){
@@ -211,11 +230,14 @@ class FileAnalyser {
 				
 				if (count($data)) {
 					
-					// sort the keys
-					ksort($data);
+					
+					// sort the values and keep the key => value associations
+					asort($data);
+					$data= array_reverse($data);
 				
-					foreach ($data as $value => $om) {
+					foreach ($data as $value => $count) {
 						if (! $first) $valString .= ', ';
+						if ($count > 1) $valString .= '[' . $count . 'x] ';
 						$valString .= $value;
 						$first = false;
 					}

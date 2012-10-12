@@ -10,6 +10,7 @@
 		function __construct()  {
 		}
 		
+		function wait($message = 'press enter to continue') { return $this->readStdInn($message);}
 		function read($message = 'press enter to continue') { return $this->readStdInn($message);}
 		function readStdInn($message = 'press enter to continue'){
 			$this->cmd_print($message.': ', false);			
