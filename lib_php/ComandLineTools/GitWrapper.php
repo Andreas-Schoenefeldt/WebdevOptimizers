@@ -90,6 +90,7 @@ class GitWrapper extends CodeControlWrapper {
 	}
 	
 	function merge($branch){
+		$this->update();
 		if ($this->execute('git merge ' . $branch) == 0) {
 			// uploading to remote repository
 			$this->execute('git push');

@@ -36,7 +36,7 @@
 			'ts' => array(
 				'name' => 'timeframeStart',
 				'datatype' => 'String',
-				'default' => '0:00',
+				'default' => '00:00',
 				'description' => 'a time before this the logs are ignored. Write as h:mm in 24h format'
 			),
 			'te' => array(
@@ -85,11 +85,14 @@
 				
 				$splits = ($params->getVal('d')) ? explode('.', $params->getVal('d')) : array();
 				
-				$day = (count($splits) == 3) ?   $splits[0] : date("d") + $config['dayoffset'];
+				$day = (count($splits) == 3) ?   $splits[0] : date("d");
 				$month = (count($splits) == 3) ? $splits[1] : date("m");
 				$year = (count($splits) == 3) ?  $splits[2] : date("Y");
 				
-				$timestamp = ($params->getVal('t')) ? intval($params->getVal('t')) : mktime(0, 0, 0,  $month , $day , $year);
+				$timestamp = strtotime("$year-$month-$day 00:00:00.000 GMT");
+				if (! $params->getVal('d')) $timestamp += $config['dayoffset'] * 86400; // change the date by the number of days
+				
+				
 				$time = date($config['timestampformat'], $timestamp);
 				
 				for ($i = 0; $i < count($config['fileBodys']); $i++){

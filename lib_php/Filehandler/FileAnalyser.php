@@ -23,6 +23,10 @@ class FileAnalyser {
 	var $allerrorscount = 0;
 	
 	var $settings = array('from' => null, 'to'=> null, 'timestamp' => null, 'timezoneOffset' => 2, 'from_human', 'to_human');
+	
+	// State Variables of the Fileanalyser
+	var $currentFile = null;
+	var $alyStatus = array(); // the current case analysation object
 
 	function __construct($files, $environment, $layout, $settings)  {
 		$this->io = new CmdIO();
@@ -43,7 +47,7 @@ class FileAnalyser {
 			
 			$filename = $this->files[$i]; 
 			if (file_exists($filename)){
-			
+				$this->currentFile = $filename;
 				$this->filePointer = fopen($filename, 'r');
 				
 				// analyse the file
@@ -60,7 +64,7 @@ class FileAnalyser {
 	// function to convert "h:mm" to seconds
 	function getSecondsFromHoure($houreString){
 		$parts = explode(':', $houreString, 2);
-		$hours = intval(trim($parts[0])) + 2 - $this->settings['timezoneOffset']; // two is the MEZ timezone offset
+		$hours = intval(trim($parts[0])) - $this->settings['timezoneOffset']; // two is the MEZ timezone offset
 		$minutes = intval(trim($parts[1]));
 		
 		// return the second value
@@ -89,11 +93,38 @@ class FileAnalyser {
 		throw new Exception("Not Implemented.");
 	}
 	
+	/**
+	 *	The basic get line function. Will add a line to the currents case stack trace and increment the internal line number counter
+	 *
+	 *	@return String		The next line of the file
+	 */
+	function getNextLineOfCurrentFile(){
+		$this->alyStatus['lineNumber']++;
+		$line = fgets($this->filePointer, 4096);
+		$this->alyStatus['stacktrace'] .= $line;
+		
+		$trimmedLine = trim($line);
+		return ($line && !$trimmedLine) ? true : $trimmedLine;
+	}
+	
+	/**
+	 * function which will do a basic initialisation of the aly status.
+	 * It is recommended to call this function in your own implementation first, because other functions of this class are reffering to the basic aly propertys
+	 *
+	 */
+	function initAlyStatus($fileIdent, $currentLineNumber){
+		$this->alyStatus = array(
+			  'timestamp' => $this->settings['timestamp']
+			, 'stacktrace' => ''
+			, 'lineNumber' => $currentLineNumber
+			, 'fileIdent' => $fileIdent
+			, 'data' => array() // a map of data entrys
+		);
+	}
+	
 	
 	function addEntry($timestamp, $type, $key, $lineNumber, $fileIdent, $data, $stacktrace) {
-		
 		if ($timestamp >= $this->settings['from'] && $timestamp <= $this->settings['to']) {
-			
 			$key = str_replace(array("\n", "\r"), '' , $key);
 			
 			if (! array_key_exists($key, $this->entrys)){
@@ -268,6 +299,9 @@ class FileAnalyser {
 		return $filename;
 	}
 	
+	function displayError($line){
+		d('SOMETHING STRANGE: ' . $line . "\n" . 'line ' .  $this->alyStatus['lineNumber'] . ' in File: ' . $this->currentFile);
+	}
 	
 	function writeJs(){
 		copy(str_replace('//','/',dirname(__FILE__).'/') .'../templates/analyse/app.js', $this->workingDir . '/app.js');
