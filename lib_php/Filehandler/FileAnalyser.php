@@ -249,7 +249,7 @@ class FileAnalyser {
 			$fileString .= '<div class="error_row widget_showAditionals">' . "\n";
 			$fileString .= '	<div class="entry number">' . $stats['count'] . ' x</div>' . "\n";
 			$fileString .= '	<div class="entry type">' . htmlentities($stats['type']) . '</div>' . "\n";
-			$fileString .= '	<div class="entry actions"><a class="widget_traceoverlay minibutton" title="show the raw stacktrace of this error">raw<span class="hidden overlay"><span class="headline">First occurence in line ' . $stats['line'] . ', logfile ' . $pathexplodes[count($pathexplodes) - 1] . '</span><pre class="preformated">' . $stats['stacktrace'] . '</pre></span></a></div>' . "\n";
+			$fileString .= '	<div class="entry actions"><a class="widget_traceoverlay minibutton" title="show the raw stacktrace of this error">raw<span class="hidden overlay"><span class="headline">First occurence in line ' . $stats['line'] . ', logfile ' . $pathexplodes[count($pathexplodes) - 1] . '</span><pre class="preformated">' . htmlentities($stats['stacktrace']) . '</pre></span></a></div>' . "\n";
 			$fileString .= '
 	<div class="entry message">
 		<div>' . htmlentities($message) . '</div>

@@ -556,6 +556,17 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			),
 			
 			array(
+				  'start' => 'Invalid order status change from COMPLETED to OPEN for order '
+				, 'type' => 'Invalid order status change'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['orders']['#' . substr($alyStatus['entry'], strlen($definition['start']))] = true;
+					$alyStatus['entry'] = 'Invalid order status change from COMPLETED to OPEN';
+					return $alyStatus;
+				}
+			),
+			
+			array(
 				  'start' => 'Unexpected error: JDBC/SQL error: '
 				, 'type' => 'ORMSQLException'
 				, 'weight'	=> 9
@@ -604,7 +615,18 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				  'start' => 'The basket is null'
 				, 'type' => 'Missing Basket'
 				, 'weight' => 1
-			)
+			),
+			
+			array(
+				  'start' => 'Invalid order status change from COMPLETED to CANCELLED for order '
+				, 'type' => 'Invalid order status change'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['orders']['#' . substr($alyStatus['entry'], strlen($definition['start']))] = true;
+					$alyStatus['entry'] = 'Invalid order status change from COMPLETED to CANCELLED';
+					return $alyStatus;
+				}
+			),
 		);
 		
 		$continue = true;
