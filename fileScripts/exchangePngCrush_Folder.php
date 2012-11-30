@@ -216,12 +216,18 @@
 		
 		foreach ($crushdata as $datafilepath => $filearray){
 			
-			$fileHandle = fopen($datafilepath, 'w') or die("can't open file $datafilepath");
-			foreach($filearray as $filename => $arFt){
-				if($arFt[1]) fwrite($fileHandle, $filename."|".$arFt[0]."\n");
-			}
+			if (count($filearray) > 0) {
 			
-			fclose($fileHandle);
+				$fileHandle = fopen($datafilepath, 'w') or die("can't open file $datafilepath");
+				foreach($filearray as $filename => $arFt){
+					if($arFt[1]) fwrite($fileHandle, $filename."|".$arFt[0]."\n");
+				}
+				
+				fclose($fileHandle);
+			} else if (file_exists($datafilepath)) {
+				// delet the file if it is not needed
+				unlink($datafilepath);
+			}
 		}
 		
 	}
