@@ -6,8 +6,10 @@ require_once(str_replace('//','/',dirname(__FILE__).'/') .'../FileAnalyser.php')
 class DemandwareLogAnalyser extends FileAnalyser {
 	
 	var $cartridgePath = array(); // the cartridgepath in order of inclusion
+	var $alertConfiguration = array();
 	
-	function __construct($file, $layout, $settings)  {
+	function __construct($file, $layout, $settings, $alertConfiguration)  {
+		$this->alertConfiguration = $alertConfiguration;
 		parent::__construct($file, 'demandware', $layout, $settings);
 	}
 	
@@ -31,11 +33,19 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					$this->io->read('Add error from line ' . $this->alyStatus['entryNumber'] . ': ' .  $this->alyStatus['errorType']);
 					*/
 					
-					$this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
+					$errorCount = $this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
+					
+					$alertMail = $this->checkAlert($this->alyStatus['entry'], $errorCount, $this->alyStatus['stacktrace']);
+					
+					if (!empty($alertMail)) {
+						$this->alertMails[$this->alyStatus['entry']] = $alertMail;
+					}
+					
 					$this->initAlyStatus($fileIdent, $this->alyStatus['lineNumber'], $line);
 				}
 			}
 		}
+		
 	}
 	
 	// analyse a single line
@@ -756,6 +766,82 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		
 		return $siteString;
 	}
+	
+	
+	// check if alert has to be thrown and return mail object for notification
+	function checkAlert($errorType, $errorCount, $stacktrace) {
+		$filename = $this->currentFile;
+		// get configuration
+		$thresholds = $this->alertConfiguration['thresholds'];
+		$senderemailaddress = $this->alertConfiguration['senderemailaddress'];
+		$emailadresses = $this->alertConfiguration['emailadresses'];
+		// preset mail variables
+		$message = "Error Count: $errorCount\n\nLog File: ".substr (strrchr($filename,'/'), 1)."\n\n".$stacktrace; 
+		$mail = array();
+		$mail[$errorType] = array();
+		
+		// check for ignore pattern
+		foreach ($thresholds['ignorepattern'] as $pattern) {
+			if (preg_match("/$pattern/", $stacktrace)) {
+				return false;
+			}
+		}
+		
+		// check for any other threshold
+		foreach ($thresholds as $threshold => $expression) {
+			switch($threshold) {
+				default:
+					throw new Exception('Don\'t know how to handel ' . $threshold . ' threshold.');
+					break;
+				case 'errorcount':
+					if ($errorCount > $expression) {
+						$mail[$errorType][$threshold] = array(
+							'message' => "Threshold: Error Count $expression exceeded.\n\n".$message
+						);
+						//d('ERRORCOUNT: '. $errorCount.' '.$errorType);
+					}
+					break;
+				case 'matchpattern':
+					foreach ($expression as $pattern) {
+						if (preg_match("/$pattern/", $stacktrace)) {
+							$mail[$errorType][$threshold] = array(
+								'message' => "Threshold: Pattern '".$pattern."' matched.\n\n".$message
+							);
+							//d('<b>ERRORMATCH</b>: '.$pattern.' '.$errorType);
+						}
+					}
+					break;
+				case 'ignorepattern':
+					break;
+			}
+		}
+		
+		return $mail;
+	}
+	
+	// sends all mails in global alertMails object
+	function sendMails() {
+		if (!empty($this->alertMails)) {
+			$senderemailaddress = $this->alertConfiguration['senderemailaddress'];
+			$emailadresses = $this->alertConfiguration['emailadresses'];
+			$subject = !empty($this->alertConfiguration['subject']) ? "{$this->alertConfiguration['subject']} ": "ALERT: ";
+			
+			foreach ($this->alertMails as $mail) {
+				d("mail");
+				foreach ($mail as $errorType => $errorTypeMail) {
+					foreach ($errorTypeMail as $threshold => $thresholdMail) {
+						mail(	join(',',$emailadresses), 
+								"$subject.[$errorType]", 
+								"An alert has been raised by Log File Monitor!\n\nError Type: $errorType\n\n".$thresholdMail['message'], 
+								"From:" . $senderemailaddress
+							);
+					}
+				}
+			}
+		}
+	
+	}
+
 	
 }
 

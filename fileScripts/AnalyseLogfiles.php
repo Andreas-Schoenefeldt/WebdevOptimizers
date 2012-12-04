@@ -134,8 +134,7 @@
 			);
 			
 			foreach ($results as $layout => $files) {
-				$analyser = new $class($files, $layout, $settings);
-				
+				$analyser = new $class($files, $layout, $settings, $alertConfiguration);
 				$analyser->setWorkingDir($htmlWorkingDir);
 				$analyser->setTime($timestamp);
 				

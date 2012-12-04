@@ -27,6 +27,8 @@ class FileAnalyser {
 	// State Variables of the Fileanalyser
 	var $currentFile = null;
 	var $alyStatus = array(); // the current case analysation object
+	
+	var $alertMails = array();
 
 	function __construct($files, $environment, $layout, $settings)  {
 		$this->io = new CmdIO();
@@ -59,6 +61,8 @@ class FileAnalyser {
 				$this->io->error("File $filename does not exist");
 			}	
 		}
+		
+		$this->sendMails();
 	}
 	
 	// function to convert "h:mm" to seconds
@@ -94,6 +98,13 @@ class FileAnalyser {
 	}
 	
 	/**
+	 *	the send mails function of the File Analyser. Send mails after all files has been analyzed. Should be implemented in concrete environment based childclasses
+	 */
+	function sendMails() {
+		/** TODO general implementation if needed **/
+	}
+	
+	/**
 	 *	The basic get line function. Will add a line to the currents case stack trace and increment the internal line number counter
 	 *
 	 *	@return String		The next line of the file
@@ -122,7 +133,11 @@ class FileAnalyser {
 		);
 	}
 	
-	
+	/**
+	 *	The basic add Entry function. Will add a entry to the local list of entries.
+	 *
+	 *	@return Integer		The amount of this entry
+	 */
 	function addEntry($timestamp, $type, $key, $lineNumber, $fileIdent, $data, $stacktrace) {
 		if ($timestamp >= $this->settings['from'] && $timestamp <= $this->settings['to']) {
 			$key = str_replace(array("\n", "\r"), '' , $key);
@@ -142,6 +157,8 @@ class FileAnalyser {
 			$this->entrys[$key]['data'] = $this->mergeAndUpcCuntArray($this->entrys[$key]['data'], $data);
 			
 			$this->allerrorscount++;
+			
+			return $this->entrys[$key]['count'];
 		}
 	}
 	
