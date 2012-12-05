@@ -868,7 +868,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				// rename tmp file when it exists
 				file_put_contents($tmpStoragePath,date("mdy")."\n", FILE_APPEND);
 				rename($tmpStoragePath, $storagePath);
-			} else {
+			} else if (file_exists($storagePath)) {
 				// otherwise delete mail storage when nothing new was sent
 				unlink($storagePath);
 			}
