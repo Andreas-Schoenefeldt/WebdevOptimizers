@@ -2,6 +2,7 @@
 
 require_once(str_replace('//','/',dirname(__FILE__).'/') .'../FileAnalyser.php');
 
+define("LOGFILE_ERROR",     "Logfile Error");
 
 class DemandwareLogAnalyser extends FileAnalyser {
 	
@@ -17,6 +18,12 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		
 		// init the analysation status
 		$this->initAlyStatus($fileIdent, 0);
+		
+		// check file thresholds for whole logfile
+		$alertMail = $this->checkAlert(0, '');
+		if (!empty($alertMail)) {
+			$this->alertMails[$this->layout." logfile threshold exceeded"] = $alertMail;
+		}
 		
 		while ($line = $this->getNextLineOfCurrentFile()) {
 			
@@ -35,7 +42,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					
 					$errorCount = $this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
 					
-					$alertMail = $this->checkAlert($this->alyStatus['entry'], $errorCount, $this->alyStatus['stacktrace']);
+					$alertMail = $this->checkAlert($errorCount, $this->alyStatus['stacktrace']);
 					
 					if (!empty($alertMail)) {
 						$this->alertMails[$this->alyStatus['entry']] = $alertMail;
@@ -769,21 +776,43 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	
 	
 	// check if alert has to be thrown and return mail object for notification
-	function checkAlert($errorType, $errorCount, $stacktrace) {
+	function checkAlert($errorCount, $stacktrace) {
 		$filename = $this->currentFile;
+		$filesize = round(filesize($filename) / 1024, 2);
 		// get configuration
 		$thresholds = $this->alertConfiguration['thresholds'];
 		$senderemailaddress = $this->alertConfiguration['senderemailaddress'];
 		$emailadresses = $this->alertConfiguration['emailadresses'];
 		// preset mail variables
-		$message = "Error Count: $errorCount\n\nLog File: ".substr (strrchr($filename,'/'), 1)."\n\n".$stacktrace; 
+		$message = ($errorCount>0 ? "Error Count: $errorCount\n\n" : "")."Last logfile impacted: ".substr (strrchr($filename,'/'), 1)."\n\nLogfile size: $filesize KB\n\n".$stacktrace; 
 		$mail = array();
-		$mail[$errorType] = array();
+		//$mail[$errorType] = array();
 		
 		// check for ignore pattern
-		foreach ($thresholds['ignorepattern'] as $pattern) {
-			if (preg_match("/$pattern/", $stacktrace)) {
-				return false;
+		if (isset($thresholds['ignorepattern'])) {
+			$ignorePattern = $this->checkSimplePatternThreshold($thresholds['ignorepattern'], $stacktrace);
+			if (!empty($ignorePattern)) {
+				return null;
+			}
+		}
+		
+		// check for count pattern
+		if (isset($thresholds['countpattern'])) {
+			$countPattern = $this->checkSimplePatternThreshold($thresholds['countpattern'], $stacktrace);
+			if (!empty($countPattern)) {
+				// check for pattern error count
+				if (isset($thresholds['patterncount'])) {
+					$threshold = 'patterncount';
+					$maxPatternCount = $this->checkSimpleValueThreshold($thresholds['patterncount'], $errorCount);
+					if (!empty($maxPatternCount)) {
+						$mail[$threshold] = array(
+							'message' => "Threshold: Pattern Error Count $maxPatternCount for pattern $countPattern exceeded.\n\n".$message,
+							'subject' => "Pattern Error Count $maxPatternCount for pattern $countPattern exceeded"
+						);
+						return $mail;
+					}
+				}
+				return null;
 			}
 		}
 		
@@ -794,24 +823,38 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					throw new Exception('Don\'t know how to handel ' . $threshold . ' threshold.');
 					break;
 				case 'errorcount':
-					if ($errorCount > $expression) {
-						$mail[$errorType][$threshold] = array(
-							'message' => "Threshold: Error Count $expression exceeded.\n\n".$message
+					$maxErrorCount = $this->checkSimpleValueThreshold($expression, $errorCount);
+					if (!empty($maxErrorCount)) {
+						$mail[$threshold] = array(
+							'message' => "Threshold: Error Count $maxErrorCount exceeded.\n\n".$message,
+							'subject' => "Error Count $maxErrorCount exceeded"
 						);
-						//d('ERRORCOUNT: '. $errorCount.' '.$errorType);
 					}
 					break;
 				case 'matchpattern':
-					foreach ($expression as $pattern) {
-						if (preg_match("/$pattern/", $stacktrace)) {
-							$mail[$errorType][$threshold] = array(
-								'message' => "Threshold: Pattern '".$pattern."' matched.\n\n".$message
+					$matchedPattern = $this->checkSimplePatternThreshold($expression, $stacktrace);
+					if (!empty($matchedPattern)) {
+						$mail[$threshold] = array(
+							'message' => "Threshold: Pattern '".$matchedPattern."' matched.\n\n".$message,
+							'subject' => "Pattern '".$matchedPattern."' matched"
+						);
+					}
+					break;
+				case 'filesize':
+					// only check when no log file entry is provided (only check once per file)
+					if($errorCount<=0 && empty($stacktrace)) {
+						$maxFilesize = $this->checkSimpleValueThreshold($expression, $filesize);
+						if (!empty($maxFilesize)) {
+							$mail[$threshold] = array(
+								'message' => "Threshold: Logfile size '".$maxFilesize."' KB exceeded.\n\n".$message,
+								'subject' => "Logfile size $maxFilesize KB exceeded"
 							);
-							//d('<b>ERRORMATCH</b>: '.$pattern.' '.$errorType);
 						}
 					}
 					break;
 				case 'ignorepattern':
+				case 'countpattern':
+				case 'patterncount':
 					break;
 			}
 		}
@@ -819,12 +862,41 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		return $mail;
 	}
 	
+	// checks simple threshold value for fiven threshold expression
+	function checkSimpleValueThreshold($expression, $checkvalue) {
+		$exceeded_value = null;
+		$filelayoutExists = false;
+		foreach ($expression as $filelayout => $value) {
+			if ($this->layout == $filelayout) {
+				if ($filelayout!==0) {
+					$filelayoutExists = true;
+				}
+				// allow default value when no threshold for current layout exists
+				if (($checkvalue > $value || $checkvalue < 0) && ($filelayout!==0 || !$filelayoutExists)) {	
+					$exceeded_value = $value;
+				}
+			}
+		}
+		return $exceeded_value;
+	}
+	
+	// checks simple threshold pattern for fiven threshold expression
+	function checkSimplePatternThreshold($expression, $checkpattern) {
+		$exceeded_value = null;
+		foreach ($expression as $pattern) {
+			if (preg_match("/$pattern/", $checkpattern)) {
+				$exceeded_value = $pattern;
+			}
+		}
+		return $exceeded_value;
+	}
+	
 	// sends all mails in global alertMails object
 	function sendMails() {
 		if (!empty($this->alertMails)) {
 			$senderemailaddress = $this->alertConfiguration['senderemailaddress'];
 			$emailadresses = $this->alertConfiguration['emailadresses'];
-			$subject = !empty($this->alertConfiguration['subject']) ? "{$this->alertConfiguration['subject']} ": "ALERT: ";
+			$subject = !empty($this->alertConfiguration['subject']) ? "{$this->alertConfiguration['subject']} ": "LOG ALERT: ";
 			$storagePath = $this->currentFolder . '/sendalertmails'.$this->layout.'.sdb';
 			$tmpStoragePath = $this->currentFolder . '/sendalertmails'.$this->layout.'.tmp';
 			$mailStorage=array();
@@ -844,22 +916,21 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			}
 			
 			// send mail based on collected alertMails object
-			foreach ($this->alertMails as $mail) {
-				foreach ($mail as $errorType => $errorTypeMail) {
-					foreach ($errorTypeMail as $threshold => $thresholdMail) {
-						$success=true;
-						//only send when not already sent before
-						if (!in_array($errorType.$threshold, $mailStorage)) {
-							$success = mail(	join(',',$emailadresses), 
-										"$subject [$errorType]", 
-										"An alert has been raised by Log File Monitor!\n\nError Type: $errorType\n\n".$thresholdMail['message'], 
-										"From:" . $senderemailaddress
-									);
-						} 
-						// fill mail storage
-						if ($success) {
-							file_put_contents($tmpStoragePath,$errorType.$threshold."\n", FILE_APPEND);
-						}
+			foreach ($this->alertMails as $errorType => $errorTypeMail) {
+				foreach ($errorTypeMail as $threshold => $thresholdMail) {
+					$success=true;
+					//only send when not already sent before
+					if (!in_array($errorType.$threshold, $mailStorage)) {
+						d("<br/>mail [$errorType]");
+						$success = mail(	join(',',$emailadresses), 
+									"$subject [$errorType] - ".$thresholdMail['subject'], 
+									"An alert has been raised by Log File Monitor!\n\nError Type: $errorType\n\n".$thresholdMail['message'], 
+									"From:" . $senderemailaddress
+								);
+					} 
+					// fill mail storage
+					if ($success) {
+						file_put_contents($tmpStoragePath,$errorType.$threshold."\n", FILE_APPEND);
 					}
 				}
 			}
