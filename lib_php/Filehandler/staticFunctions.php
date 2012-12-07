@@ -112,21 +112,40 @@ function recurseOverCompleteStructure($filepath, $baseDirectory, $fileFunction, 
 }
 
 
-function deleteFiles($folder) {
+function deleteFiles($folder, $filter = array()) {
 		if(is_dir($folder)){
 				$subDir = opendir($folder);
 				while($entryName = readdir($subDir)) {
-						if($entryName != '.' && $entryName != '..' && $entryName != '.svn') {
-							$ndir = $folder.'/'.$entryName;
+						$ndir = $folder.'/'.$entryName;
+						if($entryName != '.' && $entryName != '..' && $entryName != '.svn' && ! fileFilterMatches($ndir, $filter)) {
 							deleteFiles($ndir);
 						}
 				}
 				
 				closedir($subDir);
 				rmdir($folder);
-		} else {
+		} else if (! fileFilterMatches($folder, $filter)) {
 			unlink($folder);	
+		} 
+}
+
+function emptyFolder($folder, $filter = array()) {
+	if(is_dir($folder)){
+		$subDir = opendir($folder);
+		while($entryName = readdir($subDir)) {
+			if($entryName != '.' && $entryName != '..') deleteFiles($folder . '/' . $entryName, $filter);
 		}
+		closedir($subDir);
+	} else {
+		throw new Exception("emptyFolder must be called together with a folder.");
+	}
+}
+
+function fileFilterMatches($path, $filter = array()){
+	for ($i = 0; $i < count($filter); $i++) {
+		if (preg_match($filter[$i], $path) == 1) return true;
+	}
+	return false;
 }
 
 /**

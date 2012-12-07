@@ -73,7 +73,7 @@
 				$io->out('> Preparing ' . $targetWorkingFolder);
 				
 				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder, 0744, true);
-				if ($clearWorkingFolderOnStart) deleteFiles($targetWorkingFolder);
+				if ($clearWorkingFolderOnStart) emptyFolder($targetWorkingFolder, array('/\.sdb$/'));
 				
 				if (! file_exists($targetWorkingFolder)) mkdir($targetWorkingFolder, 0744, true);
 			}
