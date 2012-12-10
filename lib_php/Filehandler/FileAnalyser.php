@@ -26,7 +26,6 @@ class FileAnalyser {
 	
 	// State Variables of the Fileanalyser
 	var $currentFile = null;
-	var $currentFolder = null;
 	var $alyStatus = array(); // the current case analysation object
 	
 	var $alertMails = array();
@@ -51,7 +50,6 @@ class FileAnalyser {
 			$filename = $this->files[$i]; 
 			if (file_exists($filename)){
 				$this->currentFile = $filename;
-				$this->currentFolder = dirname($filename);
 				$this->filePointer = fopen($filename, 'r');
 				
 				// analyse the file
@@ -63,8 +61,6 @@ class FileAnalyser {
 				$this->io->error("File $filename does not exist");
 			}	
 		}
-		
-		$this->sendMails();
 	}
 	
 	// function to convert "h:mm" to seconds
@@ -97,13 +93,6 @@ class FileAnalyser {
 	 */
 	function analyse($fileIdent) {
 		throw new Exception("Not Implemented.");
-	}
-	
-	/**
-	 *	the send mails function of the File Analyser. Send mails after all files has been analyzed. Should be implemented in concrete environment based childclasses
-	 */
-	function sendMails() {
-		/** TODO general implementation if needed **/
 	}
 	
 	/**

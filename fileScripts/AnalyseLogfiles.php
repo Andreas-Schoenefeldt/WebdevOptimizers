@@ -4,6 +4,7 @@
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
+	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Mail/Mail.php');
 
 	$params = new CmdParameterReader(
 		$argv,
@@ -98,7 +99,7 @@
 				for ($i = 0; $i < count($config['fileBodys']); $i++){
 					$file = str_replace('${timestamp}', $time, $config['fileBodys'][$i]) . '.' . $config['extension'];
 					$target = $targetWorkingFolder . '/' . $file;
-					if ($download) download($file, $targetWorkingFolder);
+					if ($download) download($file, $targetWorkingFolder, $alertConfiguration);
 					$results[$layout][] = $target;
 				}
 			}
@@ -135,6 +136,9 @@
 			
 			foreach ($results as $layout => $files) {
 				$analyser = new $class($files, $layout, $settings, $alertConfiguration);
+				
+				Mail::sendDWAlertMails($analyser->alertMails, $targetWorkingFolder, $alertConfiguration, $layout);
+				
 				$analyser->setWorkingDir($htmlWorkingDir);
 				$analyser->setTime($timestamp);
 				
@@ -161,14 +165,15 @@
 		}
 	}
 	
-	function download($filename, $localWorkingDir) {
+	function download($filename, $localWorkingDir, $alertConfiguration) {
 		global $webdavUser, $webdavPswd, $webdavUrl, $io;
 		
 		
 		// check if the file exists before
 		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" ";
 		$command = $commandBody . '"' . $webdavUrl . '/' . $filename . '"';
-		$lines = explode("\n", trim(shell_exec($command)));
+		$output = shell_exec($command);
+		$lines = explode("\n", trim($output));
 		
 		// check the response header status code
 		for ($i = 0; $i < count($lines); $i++) {
@@ -179,7 +184,7 @@
 			}
 		}
 		
-		if ($statuscode == '200') {
+		if (isset($statuscode) && $statuscode == '200') {
 		
 			$io->out('> ----------------------------------');
 			$io->out('> Downloading ' . $filename);
@@ -195,7 +200,9 @@
 			
 			return true;
 		} else {
-			$io->error('File ' . $filename . ' could not be downloaded from the server. Http Status Code: ' . $statuscode);
+			$errorMessage = "File $filename could not be downloaded from the server. Message: $output. Http Status Code: " . (isset($statuscode) ? $statuscode : 'undefined');
+			$io->error($errorMessage);
+			Mail::sendDWAlertMails(array('Server Alert' => array('Connection failed' => array('subject' => "Failed to connect to $webdavUrl.", 'message' => "Alert: Failed to connect to $webdavUrl. $errorMessage"))), $localWorkingDir, $alertConfiguration, '');
 		}
 		
 		return false;
