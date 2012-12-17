@@ -121,11 +121,11 @@
 			$filepath = $htmlWorkingDir . '/index.html';
 			$file = fopen($filepath, 'w');
 			
-			$title = "Logfiles - " . date('d.m.Y', $timestamp);
+			$title = date('d.m.Y', $timestamp);
 			
 			fwrite($file, '<!DOCTYPE html><html><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"><title>'.$title.'</title>
 				<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script><script src="app.js" type="text/javascript"></script><link href="style.css" type="text/css" rel="stylesheet">
-				</head><body><div class="page"><h1>'.$title.'</h1>');
+				</head><body><div class="page"><p><b>Logfiles</b></p><div class="today-entry entry"><h1>'.$title.'</h1>');
 			
 			$settings = array(
 				  'from' => $params->getVal('ts')
@@ -150,6 +150,30 @@
 				
 				
 			}
+			
+			fwrite($file, '</div>');
+			
+			$daysToThePast = 7;
+			for ($i = 1; $i <= $daysToThePast; $i++) {
+				
+				$pastDate = $timestamp - $i * 86400;
+				
+				$filestring = '<div class="past-entry entry">';
+				$filestring .= '<h2>' . date('d.m.Y', $pastDate) . '</h2>';
+				
+				
+				
+				foreach ($results as $layout => $files) {
+					$filename = $pastDate. '_' . $layout .'.html';
+					$filestring .= '<p><a href="' . $filename . '">' . $layout . ' logs</a></p>';
+				}
+				
+				$filestring .= '</div>';
+				
+				fwrite($file, $filestring);
+			}
+			
+			fwrite($file, '<div class="clear"><!-- K.T. --></div><div id="footer">Generated at ' . date('d. F Y, H:i') . '</div>');
 			fwrite($file, '</div></body></html>');
 			fclose($file);
 			
