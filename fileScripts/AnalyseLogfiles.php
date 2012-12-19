@@ -64,11 +64,29 @@
 		
 		// this is a remote connection, start the remote process
 		if ($params->getVal('r') || $params->getVal('l')) {
+		
+		$configBaseDir = (str_replace('//','/',dirname(__FILE__).'/') .'AnalyseLogfiles/');
+		
+		forEachFile($configBaseDir, '.*config.*\.php', true, 'processLogFiles');
 			
-			require_once(str_replace('//','/',dirname(__FILE__).'/') .'AnalyseLogfiles/config.php');
-			
-			$download = ! $params->getVal('l');
-			
+		} else {
+			$analyser = new $class($files, 'error');
+			$analyser->printResults();
+		}
+	}
+
+	function processLogFiles($configFile) {
+		global $params, $io, $class;
+		
+		$io->out('> Config File: '.$configFile);
+		
+		require_once($configFile);
+		
+		set_error_handler('custom_error_handler', E_ALL);
+
+		try {
+
+			$download = ! $params->getVal('l');	
 			
 			if ($download) { // Variable to test the html generation quikly
 				$io->out('> Preparing ' . $targetWorkingFolder);
@@ -99,7 +117,7 @@
 				for ($i = 0; $i < count($config['fileBodys']); $i++){
 					$file = str_replace('${timestamp}', $time, $config['fileBodys'][$i]) . '.' . $config['extension'];
 					$target = $targetWorkingFolder . '/' . $file;
-					if ($download) download($file, $targetWorkingFolder, $alertConfiguration);
+					if ($download) download($webdavUser, $webdavPswd, $webdavUrl, $file, $targetWorkingFolder, $alertConfiguration);
 					$results[$layout][] = $target;
 				}
 			}
@@ -158,16 +176,14 @@
 				upload('app.js');
 				upload('style.css');
 			}
-			
-		} else {
-			$analyser = new $class($files, 'error');
-			$analyser->printResults();
+		
+		} catch (Exception $e) {
+			$io->error("Error occurred during processing log files. Maybe invalid config file ($configFile) provided: ".$e->getMessage());
 		}
 	}
 	
-	function download($filename, $localWorkingDir, $alertConfiguration) {
-		global $webdavUser, $webdavPswd, $webdavUrl, $io;
-		
+	function download($webdavUser, $webdavPswd, $webdavUrl, $filename, $localWorkingDir, $alertConfiguration) {
+		global $io;
 		
 		// check if the file exists before
 		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" ";
@@ -202,7 +218,9 @@
 		} else {
 			$errorMessage = "File $filename could not be downloaded from the server. Message: $output. Http Status Code: " . (isset($statuscode) ? $statuscode : 'undefined');
 			$io->error($errorMessage);
-			Mail::sendDWAlertMails(array('Server Alert' => array('Connection failed' => array('subject' => "Failed to connect to $webdavUrl.", 'message' => "Alert: Failed to connect to $webdavUrl. $errorMessage"))), $localWorkingDir, $alertConfiguration, '');
+			if (!isset($statuscode) || $statuscode != "404") {
+				Mail::sendDWAlertMails(array('Server Alert' => array('Connection failed' => array('subject' => "Failed to connect to $webdavUrl.", 'message' => "Alert: Failed to connect to $webdavUrl. $errorMessage"))), $localWorkingDir, $alertConfiguration, '');
+			}
 		}
 		
 		return false;
@@ -225,6 +243,52 @@
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Calls a function for every file in a folder.
+	 *
+	 * @param string $dir The directory to traverse.
+	 * @param string $pattern The file pattern to call the function for. Leave as NULL to match all pattern.
+	 * @param bool $recursive Whether to list subfolders as well.
+	 * @param string $callback The function to call. It must accept one argument that is a relative filepath of the file.
+	 */
+	function forEachFile($dir, $pattern = null, $recursive = false, $callback) {
+		if ($dh = opendir($dir)) {
+			while (($file = readdir($dh)) !== false) {
+				if ($file === '.' || $file === '..') {
+					continue;
+				}
+				if (is_file($dir . $file)) {
+					if ($pattern) {
+						if (!preg_match("/$pattern/", $file)) {
+							continue;
+						}
+					}
+					$callback($dir . $file);
+				}elseif($recursive && is_dir($dir . $file)) {
+					forEachFile($dir . $file . DIRECTORY_SEPARATOR, $pattern, $recursive, $callback);
+				}
+			}
+			closedir($dh);
+		}
+	}
+	
+	function custom_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
+	{
+		$constants = get_defined_constants(1);
+
+		$eName = 'Unknown error type';
+		foreach ($constants['Core'] as $key => $value) {
+			if (substr($key, 0, 2) == 'E_' && $errno == $value) {
+				$eName = $key;
+				break;
+			}
+		}
+
+		$msg = $eName . ': ' . $errstr . ' in ' . $errfile . ', line ' . $errline;
+
+		throw new Exception($msg);
 	}
 	
 ?>
