@@ -866,14 +866,16 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	function checkSimpleValueThreshold($expression, $checkvalue) {
 		$exceeded_value = null;
 		$filelayoutExists = false;
-		foreach ($expression as $filelayout => $value) {
-			if ($this->layout == $filelayout) {
-				if ($filelayout!==0) {
-					$filelayoutExists = true;
-				}
-				// allow default value when no threshold for current layout exists
-				if (($checkvalue > $value || $checkvalue < 0) && ($filelayout!==0 || !$filelayoutExists)) {	
-					$exceeded_value = $value;
+		if (is_array($expression)) {
+			foreach ($expression as $filelayout => $value) {
+				if ($this->layout == $filelayout) {
+					if ($filelayout!==0) {
+						$filelayoutExists = true;
+					}
+					// allow default value when no threshold for current layout exists
+					if (($checkvalue > $value || $checkvalue < 0) && ($filelayout!==0 || !$filelayoutExists)) {	
+						$exceeded_value = $value;
+					}
 				}
 			}
 		}

@@ -17,14 +17,14 @@ class PseudoXML extends PseudoText{
 	var $allowedNodeInNodes = array(); // if node in nodes are allowed, they should be listed here
 	var $logicalForkNodes = array(); // list of if statement nodes, which are allowed
 	
-	function __construct($filename, $environment, $structureInit){
+	function __construct($filename, $environment = "XML", $structureInit = array()){
 		
-		$this->textNodeList = $structureInit['textNodes'];
-		$this->forcedSingleNodes = $structureInit['forcedSingleNodes'];
-		$this->forcedOpenNodes = $structureInit['forcedOpenNodes'];
-		$this->commentClosingNodes = $structureInit['commentClosingNodes']; // Is required to be sorted after key length
-		$this->allowedNodeInNodes = $structureInit['allowedNodeInNodes'];
-		$this->logicalForkNodes = $structureInit['logicalForkNodes'];
+		if ($structureInit['textNodes']) $this->textNodeList = $structureInit['textNodes'];
+		if ($structureInit['forcedSingleNodes']) $this->forcedSingleNodes = $structureInit['forcedSingleNodes'];
+		if ($structureInit['forcedOpenNodes']) $this->forcedOpenNodes = $structureInit['forcedOpenNodes'];
+		if ($structureInit['commentClosingNodes']) $this->commentClosingNodes = $structureInit['commentClosingNodes']; // Is required to be sorted after key length
+		if ($structureInit['allowedNodeInNodes']) $this->allowedNodeInNodes = $structureInit['allowedNodeInNodes'];
+		if ($structureInit['logicalForkNodes']) $this->logicalForkNodes = $structureInit['logicalForkNodes'];
 		
 		parent::__construct($filename, $environment, $structureInit);
 	}
@@ -33,6 +33,7 @@ class PseudoXML extends PseudoText{
 	function getLine($addWhitespaceNodes = true){
 		
 		while ($line = fgets($this->fp, 4096)) {
+			d($this->currentLineNumber);
 			$this->currentLineNumber++;
 			$str = trim($line);
 				

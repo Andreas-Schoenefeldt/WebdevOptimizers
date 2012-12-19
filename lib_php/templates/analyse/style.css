@@ -30,5 +30,17 @@ html {font: 14px arial;}
 .fl {float: left;}
 .fr {float: right;}
 
+a {text-decoration: none;}
+
+.page > .entry {margin: 0 6px 6px 0; padding: 12px;}
+.page > .entry > p {margin: 0;}
+.page > .entry > p > a {display: block;padding: 3px;}
+.page > .entry > p > a:hover, .page > .entry > p > a:active, .page > .entry > p > a:focus {background-color: rgba(255,255,255, .3);}
+.today-entry {background-color: #8adb66; border: 1px solid #285315;width: 428px;height: 298px;}
+.today-entry > h1 {margin-top: 0;border-bottom: 1px solid #000;}
+
+.past-entry {background-color: #66abdb;width: 200px;border: 1px solid #35688b;}
+.past-entry:hover {background-color: #84c7f6;} 
+.past-entry > h2 {margin-top: 0;}
 
 #footer {font-size: 12px; padding: 12px 0 30px; border-top: 3px dashed #999; margin-top: 30px; color: #aaa;}
