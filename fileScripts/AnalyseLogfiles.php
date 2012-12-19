@@ -166,7 +166,7 @@
 				$filename = $analyser->printResults('html');
 				fwrite($file, '<p><a href="'. $filename .'"><strong>'. $analyser->layout . ' logs</strong> ('.$analyser->getErrorCount().' different errors, '. $analyser->getAllErrorCount() .' total)</a></p>');
 				
-				if ($download) upload($filename);
+				if ($download) upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, $filename);
 				
 				
 			}
@@ -198,9 +198,9 @@
 			fclose($file);
 			
 			if ($download) {
-				upload('index.html');
-				upload('app.js');
-				upload('style.css');
+				upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, 'index.html');
+				upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, 'app.js');
+				upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, 'style.css');
 			}
 		
 		} catch (Exception $e) {
@@ -253,8 +253,8 @@
 	}
 	
 	
-	function upload($filename) {
-		global $webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, $io;
+	function upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, $filename) {
+		global $io;
 		
 		$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
 		$command =  $commandBody . '-T "' . $htmlWorkingDir . '/' . $filename . '" "' . $webdavUrl . '/html/' . $filename . '"';
