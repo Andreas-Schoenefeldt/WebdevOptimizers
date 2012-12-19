@@ -76,15 +76,17 @@
 	}
 
 	function processLogFiles($configFile) {
-		global $params, $io, $class;
-		
-		$io->out('> Config File: '.$configFile);
+		global $params, $io, $class, $configBaseDir;
+		$configPath = str_replace($configBaseDir, '', $configFile);
+		$io->out('> Config File: '.$configPath);
 		
 		require_once($configFile);
 		
 		set_error_handler('custom_error_handler', E_ALL);
 
 		try {
+		
+			$alertConfiguration['configPath'] = $configPath;
 
 			$download = ! $params->getVal('l');	
 			
@@ -289,7 +291,7 @@
 							continue;
 						}
 					}
-					$callback($dir . $file);
+					$callback($dir.$file);
 				}elseif($recursive && is_dir($dir . $file)) {
 					forEachFile($dir . $file . DIRECTORY_SEPARATOR, $pattern, $recursive, $callback);
 				}

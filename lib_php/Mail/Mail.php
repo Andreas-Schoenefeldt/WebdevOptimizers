@@ -16,8 +16,8 @@ class Mail {
 			$senderemailaddress = $alertConfiguration['senderemailaddress'];
 			$emailadresses = $alertConfiguration['emailadresses'];
 			$subject = !empty($alertConfiguration['subject']) ? "{$alertConfiguration['subject']} ": "LOG ALERT: ";
-			$storagePath = $currentFolder . '/sendalertmails'.$currentLayout.'.sdb';
-			$tmpStoragePath = $currentFolder . '/sendalertmails'.$currentLayout.'.tmp';
+			$storagePath = $currentFolder . '/sendalertmails-'.$currentLayout.'-'.str_replace(array('\\','/','.php'), array('-','-',''), $alertConfiguration['configPath']).'.sdb';
+			$tmpStoragePath = $currentFolder . '/sendalertmails-'.$currentLayout.'-'.str_replace(array('\\','/','.php'), array('-','-',''), $alertConfiguration['configPath']).'.tmp';
 			$mailStorage=array();
 			
 			// check for already sent mails
