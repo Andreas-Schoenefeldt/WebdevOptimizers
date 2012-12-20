@@ -56,8 +56,8 @@
 			$io->fatal($e->getMessage());
 		}
 		
-		if (! count($config)) {
-			$io->fatal('The given config file is empty or invalid.', 'CreateSeleniumTestSuite');
+		if (! isset($config) || ! count($config)) {
+			$io->fatal('The given config file is empty or invalid: ' . $configFileName, 'CreateSeleniumTestSuite');
 		}
 		
 		
