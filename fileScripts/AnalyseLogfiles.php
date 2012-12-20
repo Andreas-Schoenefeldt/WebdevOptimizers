@@ -143,8 +143,12 @@
 			
 			$title = date('d.m.Y', $timestamp);
 			
-			fwrite($file, '<!DOCTYPE html><html><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"><title>'.$title.'</title>
-				<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script><script src="app.js" type="text/javascript"></script><link href="style.css" type="text/css" rel="stylesheet">
+			fwrite($file, '<!DOCTYPE html><html><head>
+					<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+					<title>'.$title.'</title>
+					<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script>
+					<script src="app.js" type="text/javascript"></script><link href="style.css" type="text/css" rel="stylesheet">
+					<meta http-equiv="refresh" content="900">
 				</head><body><div class="page"><p><b>Logfiles</b></p><div class="today-entry entry"><h1>'.$title.'</h1>');
 			
 			$settings = array(

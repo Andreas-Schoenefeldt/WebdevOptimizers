@@ -86,7 +86,7 @@ class GitWrapper extends CodeControlWrapper {
 	}
 	
 	function remove($files){
-		$this->execute('git rm -f ' . implode(' ', $files));
+		$this->execute('git rm -f -r ' . implode(' ', $files));
 	}
 	
 	function merge($branch){
