@@ -98,6 +98,7 @@ class GitWrapper extends CodeControlWrapper {
 	}
 	
 	function log($filters) {
-		$this->execute('git log');
+		$this->execute('git log --pretty=format:"%h %cn %cr: %s" -20');
+		echo ("\n");
 	}
 }

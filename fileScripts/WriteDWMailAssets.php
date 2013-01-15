@@ -15,6 +15,18 @@
 				
 				'description' => 'Clear. If set, the outputfolder will we cleared before the file creation'
 			),
+			'o' => array(
+				'name' => 'output',
+				'datatype' => 'Enum',
+				'default' => 'xml',
+				'values' => array(
+					  'xml' => array('name' => 'xml')
+					, 'html' => array('name' => 'html')
+				),
+				
+				'description' => 'Defines if we generate html or a xml library'
+				
+			),
 		),
 		'A Script to create a demandware content import xml file in order to create multilingual sitespecific content assets.'
 	);
@@ -36,6 +48,13 @@
 		
 		if (! isset($siteAssets) || ! count($siteAssets)) {
 			$io->fatal('The given config file is empty or invalid: ' . $configFileName, 'CreateSeleniumTestSuite');
+		}
+		
+		switch ($params->getVal('o')) {
+			case 'html':
+				break;
+			case 'xml':
+				break;
 		}
 		
 		
@@ -63,15 +82,17 @@
 			
 			while ($line = fgets($tfFp, 2048)){
 				
+				$loopEntrys = (array_key_exists('entrys', $vars)) ? $vars['entrys'] : $entrys;
+				
 				// now do all the locals
-				for ($i = 0; $i < count($entrys); $i++) {
-					$entry = $entrys[$i];
+				for ($i = 0; $i < count($loopEntrys); $i++) {
+					$entry = $loopEntrys[$i];
 					$locale = getLanguage($entry);
 					$site = getSite($entry);
 					
 					if (! array_key_exists($entry, $localisedContents)) $localisedContents[$entry] = '<custom-attribute attribute-id="body" xml:lang="' . $entry . '">';
 					
-					$localisedContents[$entry] .=  str_replace(array("&", "<", ">", "\"", "'"), array("&amp;", "&lt;", "&gt;", "&quot;", "&apos;"), processTemplate($line, $locale, $site, $vars['vars']));
+					$localisedContents[$entry] .=  str_replace(array("&", "<", ">", "\"", "'"), array("&amp;", "&lt;", "&gt;", "&quot;", "&apos;"), processTemplate($line, $locale, $site, $vars));
 					
 				}
 			}
@@ -111,22 +132,27 @@
 	
 	function processTemplate($string, $locale, $site, $vars) {
 		
-		preg_match_all('/\${[ ]*?_t\([ ]*?["\'][ ]*?(?P<key>.*?)[ ]*?["\'][ ]*?\)}/', $string, $matches, PREG_PATTERN_ORDER);
-					
+		preg_match_all('/\${[ ]*?_t\([ ]*?["\'][ ]*?(?P<key>.*?)[ ]*?["\'][ ]*?\)[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
 		for ($i = 0; $i < count($matches['key']); $i++){
-			
 			$key = $matches['key'][$i];
-			
 			$string = str_replace($matches[0][$i], translate($key, $locale), $string);
 		}
 		
-		preg_match_all('/\${[ ]*?_var\([ ]*?["\'][ ]*?(?P<var>.*?)[ ]*?["\'][ ]*?\)}/', $string, $matches, PREG_PATTERN_ORDER);
-					
+		preg_match_all('/\${[ ]*?_var\([ ]*?["\'][ ]*?(?P<var>.*?)[ ]*?["\'][ ]*?\)[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
 		for ($i = 0; $i < count($matches['var']); $i++){
-			
 			$key = $matches['var'][$i];
-			
-			$string = str_replace($matches[0][$i], $vars[$key][$site], $string);
+			$string = str_replace($matches[0][$i], $vars['vars'][$key][$site], $string);
+		}
+		
+		preg_match_all('/\${[ ]*?_css\([ ]*?["\'][ ]*?(?P<css>.*?)[ ]*?["\'][ ]*?\)[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
+		for ($i = 0; $i < count($matches['css']); $i++){
+			$key = $matches['css'][$i];
+			$string = str_replace($matches[0][$i], $vars['CSS'][$key], $string);
+		}
+		
+		preg_match_all('/\${[ ]*?locale[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
+		for ($i = 0; $i < count($matches[0]); $i++){
+			$string = str_replace($matches[0][$i], $locale, $string);
 		}
 		
 		return $string;

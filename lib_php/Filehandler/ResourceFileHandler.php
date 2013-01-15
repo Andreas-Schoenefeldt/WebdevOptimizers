@@ -35,6 +35,7 @@ class ResourceFileHandler {
 			case 'find':
 				$this->resourceFileParsingMode = 'values';
 				break;
+			case 'both':
 			case 'project_optimize':
 				$this->resourceFileParsingMode = 'both';
 				break;
@@ -422,6 +423,7 @@ class ResourceFileHandler {
 	}
 	
 	// Will add or change a key for a certain value
+	// this is the MAIN function to add or update new key value pairs to the resource files
 	function setKeyForFile($namespace, $key, $value, $rootfolder, $locale = 'default', $before = '', $after = ''){
 		if (!array_key_exists($key, $this->localisationMap[$namespace][$rootfolder][$locale]['keys']) || $this->localisationMap[$namespace][$rootfolder][$locale]['keys'][$key] != $value) {
 			
@@ -562,8 +564,37 @@ class ResourceFileHandler {
 	}
 	
 	/**
+	 *	Takes a map with the following format and will try to merge it into the existing structure
 	 *
-	 * Will register a tranlation value. If no corresponding key is found, the function will ask for a translation
+	 *	Array(
+			[default] => Array(
+			  [keys] => Array(
+				[key1]                     => "value1"
+				[key2]                 	   => "value2"
+			  )
+			)
+			[fr]      => Array(
+			  [keys] => Array(
+				[key1]                     => "value1"
+				[key2]                 	   => "value2"
+	 */
+	function mergeKeyFileExtract($keyMap) {
+		
+		foreach ($keyMap as $locale => $stats) {
+			foreach ($stats['keys'] as $key => $value){
+				$namespace = $this->getBestResourceKeyNamespace($key);
+				$rootfolder = $this->getBestRootFolder($namespace);
+				
+				$this->setKeyForFile($namespace, $key, $value, $rootfolder, $locale);
+				
+			}
+		}
+		
+	}
+	
+	/**
+	 *
+	 * Will register a translation value. If no corresponding key is found, the function will ask for a translation
 	 *
 	 * returns true, if the file needs to be changed, false otherwise
 	 *

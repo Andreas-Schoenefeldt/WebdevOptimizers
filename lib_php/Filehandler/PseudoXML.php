@@ -33,7 +33,7 @@ class PseudoXML extends PseudoText{
 	function getLine($addWhitespaceNodes = true){
 		
 		while ($line = fgets($this->fp, 4096)) {
-			d($this->currentLineNumber);
+			// d($this->currentLineNumber);
 			$this->currentLineNumber++;
 			$str = trim($line);
 				
@@ -661,7 +661,7 @@ class PseudoXML extends PseudoText{
 								$this->printDoc();
 								
 								$this->io->cmd_print("line ".$this->currentLineNumber." - ".$nodeName);
-								$this->fatal('Not the right closing tag. '.$this->currentNode->nodeName.' expected');
+								$this->fatal('Not the right closing tag: '.$this->currentNode->nodeName.' expected. (' . $this->filename . ')');
 						}
 				}
 			
