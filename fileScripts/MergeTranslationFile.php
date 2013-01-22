@@ -103,7 +103,7 @@
 		$parts = explode(';', $line);
 		
 		// build the keymap
-		for ($i = 0; $i < count($parts); $i++) {
+		for ($i = 1; $i < count($parts); $i++) {
 			$mergeKeys[trim($parts[$i])] = array('keys' => array());
 			$indexes[$i] = trim($parts[$i]);
 		}
@@ -112,7 +112,9 @@
 		while ($line = fgets($mergefile)) {
 			$lineNumber++;
 			$parts = explode(';', $line);
-			for ($i = 0; $i < count($parts); $i++) {
+			$key = trim($parts[0]);
+			for ($i = 1; $i < count($parts); $i++) {
+				/* // old file syntax
 				$keyVal = explode('=', $parts[$i], 2);
 				
 				if (trim($keyVal[0]) && count($keyVal) > 1) {
@@ -120,6 +122,16 @@
 				} else {
 					$io->error($parts[$i], 'line ' . $lineNumber . ' of the merge file');
 				}
+				
+				*/
+				$value = trim($parts[$i]);
+				
+				if ($key && $value) {
+					$mergeKeys[$indexes[$i]]['keys'][$key] = trim($value);
+				} else {
+					$io->error($line, 'line ' . $lineNumber . ' of the merge file');
+				}
+				
 			}
 			
 		}
