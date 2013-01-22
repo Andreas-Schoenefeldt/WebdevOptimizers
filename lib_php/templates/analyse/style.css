@@ -47,7 +47,7 @@ a {text-decoration: none;}
 
 .occ-frame {margin: 10px 0;cursor: default;}
 
-.timing {height: 150px; overflow-y:hidden;overflow-x: auto;position: relative;border-left: 1px dotted #444;margin-left: 25px;}
+.timing {height: 150px; overflow-y:hidden;overflow-x: scroll;position: relative;border-left: 1px dotted #444;margin-left: 25px;}
 .occurence {position: absolute; bottom: 0; width: 4px;background: green;}
 .occLbl {display: none;}
 

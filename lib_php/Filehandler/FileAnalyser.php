@@ -240,7 +240,7 @@ class FileAnalyser {
 	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
 
 	<title>'.$title.'</title>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" type="text/javascript"></script>
 	<script src="app.js" type="text/javascript"></script>
 	<link href="style.css" type="text/css" rel="stylesheet">
 </head>
