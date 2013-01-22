@@ -269,19 +269,62 @@ class FileAnalyser {
 				
 				if (count($data)) {
 					
+					if ($headline != 'GMT timestamps') {
+						// sort the values and keep the key => value associations
+						asort($data);
+						$data= array_reverse($data);
 					
-					// sort the values and keep the key => value associations
-					asort($data);
-					$data= array_reverse($data);
 				
-					foreach ($data as $value => $count) {
-						if (! $first) $valString .= ', ';
-						if ($count > 1) $valString .= '[' . $count . 'x] ';
-						$valString .= $value;
-						$first = false;
+						foreach ($data as $value => $count) {
+							if (! $first) $valString .= ', ';
+							if ($count > 1) $valString .= '[' . $count . 'x] ';
+							$valString .= $value;
+							$first = false;
+						}
+						
+						$fileString .=  '<div><strong>' . htmlentities($headline) . ':</strong> ' . htmlentities($valString) . '</div>'. "\n";
+					} else {
+						$maxCount = 0;
+						foreach ($data as $value => $count) {
+							$maxCount = ($count > $maxCount) ? $count : $maxCount;
+						}
+						
+						$fileString .=  '<div><strong>' . htmlentities($headline) . ':</strong><div class="occ-frame"><div class="sideLabels"><label class="topLbl">' . $maxCount . '</label><label class="bottomLbl">0</label></div><div class="timing">';
+						
+						$bottomLbl = '<div class="bottomLabels">';
+						$lastHoure = -1;
+						
+						$firstI = 0;
+						
+						for ($i = 0; $i < 1440; $i++){
+							
+							if ($firstI) $firstI++;
+							
+							$minute = $i % 60;
+							$houre = intval( $i / 60);
+							
+							$val = ' ' . ($houre < 10 ? '0' : '') . $houre . ':' . ($minute < 10 ? '0' : '') . $minute;
+							
+							if (array_key_exists($val, $data) && $data[$val]) {
+								
+								if (! $firstI) $firstI = 1;
+								
+								if ($lastHoure != $houre) {
+									$lastHoure = $houre;
+									$bottomLbl .= '<label class="btm-lbl" style="left: '. ($firstI * 5 + 1 ) .'px" >' . $val . '</label>';
+									
+								}
+								
+								$height = $data[$val] / $maxCount * 100;
+								$fileString .=  '<div class="occ-line" style="left: '. ($firstI * 5 ) .'px"><div class="occurence" style="height: '.$height.'%;"></div><label class="occLbl">' . $val . ' - ' . $data[$val] . ' time(s)</label></div>';
+							}
+							
+						}
+						
+						$bottomLbl .= '</div>';
+						
+						$fileString .= $bottomLbl . '</div></div><div class="clear"></div></div>';
 					}
-					
-					$fileString .=  '<div><strong>' . htmlentities($headline) . ':</strong> ' . htmlentities($valString) . '</div>'. "\n";
 				}
 			}
 			$fileString .= '

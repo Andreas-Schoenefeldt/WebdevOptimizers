@@ -44,3 +44,22 @@ a {text-decoration: none;}
 .past-entry > h2 {margin-top: 0;}
 
 #footer {font-size: 12px; padding: 12px 0 30px; border-top: 3px dashed #999; margin-top: 30px; color: #aaa;}
+
+.occ-frame {margin: 10px 0;cursor: default;}
+
+.timing {height: 150px; overflow-y:hidden;overflow-x: auto;position: relative;border-left: 1px dotted #444;margin-left: 25px;}
+.occurence {position: absolute; bottom: 0; width: 4px;background: green;}
+.occLbl {display: none;}
+
+.occ-line {position: absolute; bottom: 14px; width: 3px;cursor: default;top: 0;padding-right: 2px;}
+
+.occ-line:hover > .occurence {background:lightgreen; }
+.occ-line:hover > .occLbl {display: block; position: absolute;z-index: 3; bottom: 100px; left: -40px; white-space: nowrap; padding: 3px;background: #fff; box-shadow: 0 0 3px rgba(0,0,0,.3); border: 1px solid #ccc; border-radius: 4px;}
+
+.sideLabels {float: left; height: 120px;border-bottom: 1px solid #444; border-top: 1px solid #444; position: relative; width: 5px;margin-left: 20px;}
+.topLbl, .bottomLbl {position: absolute; width: 20px; text-align: right; right: 7px;}
+.topLbl {top: -7px;}
+.bottomLbl {bottom: -7px;}
+
+.bottomLabels {position: absolute; bottom: 0; height: 14px; left: 0; right: 0;}
+.btm-lbl {position: absolute; top: 0; border-left: 1px solid #444; height: 7px; padding: 0 4px;}

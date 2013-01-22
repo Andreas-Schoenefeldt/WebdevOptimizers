@@ -102,7 +102,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$parts = explode(']', substr($line, 29), 2);
 				$this->alyStatus['data']['dates'][substr($line, 1, 10)] = true;
 				$this->alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
-				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 9)] = true;
+				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 6)] = true;
 			} else {
 				$errorLineLayout = 'core_extract';
 				$parts = explode(':', $line, 2);
@@ -180,7 +180,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$parts = (count($parts) > 1) ? $parts : explode(' custom  ', $line); // this is a message comming form Logger.error
 				$this->alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$this->alyStatus['data']['dates'][substr($line, 1, 10)] = true;
-				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 9)] = true;
+				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 6)] = true; // We only need a granularity by minute
 			} else {
 				$errorLineLayout = 'core_extract';
 				$parts = explode(':', $line, 2);
@@ -373,7 +373,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			if ($isExtended) {
 				$this->alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$this->alyStatus['data']['dates'][substr($line, 1, 10)] = true;
-				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 9)] = true;
+				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 6)] = true;
 				$parts = explode(' "', $line, 2);
 				$errorLineLayout = 'extended';
 			} else {
