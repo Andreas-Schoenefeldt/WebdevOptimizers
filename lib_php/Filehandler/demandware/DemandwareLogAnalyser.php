@@ -132,29 +132,34 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				switch($this->alyStatus['errorType']){
 					default:
-					
-						preg_match('/(, max actual was [0-9]*?),/', $description[1], $matches);
+						
+						preg_match('/^(.*)(\(.*?,.*?,.*?\))$/', $this->alyStatus['errorType'], $matchesHead);
+						
+						if (count($matchesHead > 2)) {
+							$this->alyStatus['errorType'] = $matchesHead[1];
+							$this->alyStatus['entry'] = $matchesHead[2];
+						}
 						
 						$message = $description[1];
+						
+						preg_match('/(, max actual was [0-9]*?),/', $message, $matches);
+						
 						if (count($matches) > 1) {
 							$message = str_replace($matches[1], '', $message);
 							$maxExceeds = explode(' ', $matches[1]);
-							$this->alyStatus['data']['max actual'][$maxExceeds[count($maxExceeds) - 1]] = true;
+							$this->alyStatus['data']['max actual']['#' . $maxExceeds[count($maxExceeds) - 1]] = true;
 						} 
 					
-						$this->alyStatus['entry'] = $this->alyStatus['errorType'] . ': ' . $message;
+						// $this->alyStatus['entry'] = $this->alyStatus['errorType'] . ': ' . $message;
 						if ($errorLineLayout == 'extended' && count($messageParts) > 2) {
 							$this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
-						} else {
-							$type = $messageParts[0];
-							if (startsWith($type, 'MulticastListener')) $type = 'MulticastListener';
-							
-							$this->alyStatus['entry'] = $type . ': ' . $this->alyStatus['entry'];
 						}
+						
 						break;
 				}
 				
 			} else {
+				d($this->alyStatus);
 				d($parts);
 				$this->displayError($line);
 			}
@@ -374,6 +379,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$this->alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$this->alyStatus['data']['dates'][substr($line, 1, 10)] = true;
 				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 6)] = true;
+				$line = substr($line, 30);
 				$parts = explode(' "', $line, 2);
 				$errorLineLayout = 'extended';
 			} else {
@@ -531,8 +537,28 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 			} else {
 				
-				d($parts);
-				$this->displayError($line);
+				// we probably have an error like this
+				// ERROR JobThread|14911671|BazaarProductCatalogExport|JobExecutor-Start system.dw.net.SFTPClient  {0}
+				
+				$parts = explode('|', $line);
+				
+				if (count($parts) > 3) {
+					
+					$look = 'ERROR';
+					
+					if ( startsWith($look, trim($parts[0]) )) $this->alyStatus['errorType'] = $look . ' ';
+					$this->alyStatus['errorType'] .= trim($parts[2]);
+					
+					$partlets = explode(' ', trim($parts[3]));
+					$this->alyStatus['data']['pipelines'][$partlets[0]] = true;
+					$this->alyStatus['entry'] = trim($parts[0]) . ' ' . trim($parts[2]) . ' ';
+					
+				} else {
+					
+					$this->alyStatus['entry'] = $line;
+					d($parts);
+					$this->displayError($line);
+				}
 			}
 		} else if ($this->startsWithTimestamp($line)) { // a log entry is unfortuatly only finished after we found the next entry or end of file 
 			$this->alyStatus['add'] = true;

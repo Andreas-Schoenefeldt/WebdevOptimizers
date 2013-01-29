@@ -49,6 +49,7 @@ class CmdParameterReader {
 		$this->buildDefinition($allowed);
 		
 		// parse the parameters
+		
 		$this->parseParameters($parameters);
 		
 		
@@ -83,8 +84,16 @@ class CmdParameterReader {
 				
 				$parts = explode('-', $param, 2);
 				
+				// get the name
+				$name = $parts[1];
+				if ( array_key_exists($name, $this->names)) {
+					$name = $this->names[$name];
+				} else {
+					$this->io->fatal("Unknown parameter $name", get_class($this));
+				}
+				
 				// get the datatype
-				$dataType = $this->getParameterDataType($parts[1]);
+				$dataType = $this->getParameterDataType($name);
 				
 				switch ($dataType) {
 					default:
@@ -123,15 +132,15 @@ class CmdParameterReader {
 						}
 						
 						// check if the parameter is part of the definition
-						if (! $val = $this->isValueOfEnum($val, $parts[1])) {
-							$this->io->fatal( "Unalowed usage of parameter ".$parts[1] , get_class($this));
+						if (! $val = $this->isValueOfEnum($val, $name)) {
+							$this->io->fatal( "Unalowed usage of parameter ".$name , get_class($this));
 						}
 						
 						break;
 					
 				}
 				
-				$this->parameters[$parts[1]] = $val;
+				$this->parameters[$name] = $val;
 				
 			} else if ($param) {
 				
@@ -177,7 +186,6 @@ class CmdParameterReader {
 	
 	
 	function getVal($paramName){
-		
 		if (array_key_exists($paramName, $this->names) && array_key_exists($this->names[$paramName], $this->parameters)) {
 			return $this->parameters[$this->names[$paramName]];
 		}
