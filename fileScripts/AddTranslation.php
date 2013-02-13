@@ -68,11 +68,11 @@
 		 * )
 		 ** --------------------------------------------------------------- */
 		
-		$htmlSingleNodes = array('br', 'input', 'link', 'meta', 'img');
-		$htmlTextNodes = array('script', 'style', '!--', '!DOCTYPE');
+		$htmlSingleNodes = array('br', 'input', 'link', 'meta', 'img', 'hr');
+		$htmlTextNodes = array('script', 'style', '!--', '!DOCTYPE', '?xml');
 		$htmlInlineNodes = array('b', 'u', 'i', 'a', 'strong', 'emph');
-		$htmlIgnoreAttributeNodes = array('!--', 'script', '!DOCTYPE');
-		$htmlCommentClosingNodes = array('!--' => '-->', '!DOCTYPE' => '>'); // mapping of tag name to full closing String
+		$htmlIgnoreAttributeNodes = array('!--', 'script', '!DOCTYPE', '?xml');
+		$htmlCommentClosingNodes = array('!--' => '-->', '!DOCTYPE' => '>', '?xml' => '?>'); // mapping of tag name to full closing String
 		
 		$htmlTranslatebleAttributesList = array('title', 'alt', 'value'); // html attributes, which will be checked for translation
 		$htmlTranslatebleInputTypeList = array('button', 'submit'); // types of inputs, which are translated anyway
@@ -112,11 +112,10 @@
 				// config
 				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'cartridges';
 				
-				$forcedSingleNodes = array_merge($htmlSingleNodes,
+				$forcedSingleNodes = array_merge(
+					$htmlSingleNodes,
 					// isml single nodes
-					array('iselse' , 'isaddressform', 'isprint', 'isinclude', 'iscontentasset' , 'isinputfield', 'isbminputfield', 'ispaymentline', 'iselseif', 'isset', 'isbreak', 'isreplace', 'islineitemprice', 'isstatus', 'iscontent', 'isbreadcrumb', 'ismodule'),
-					// pipeline single nodes
-					array('?xml', '?demandware-pipeline')
+					array('iselse' , 'isaddressform', 'isprint', 'isinclude', 'iscontentasset' , 'isinputfield', 'isbminputfield', 'ispaymentline', 'iselseif', 'isset', 'isbreak', 'isreplace', 'islineitemprice', 'isstatus', 'iscontent', 'isbreadcrumb', 'ismodule')
 				);
 				
 				$forcedOpenNodes = array('isif', 'isdecorate');
@@ -125,14 +124,14 @@
 				
 				$textNodes = array_merge($htmlTextNodes, array('iscomment', '!---', 'isscript'));
 				$inlineNodes = array_merge($htmlInlineNodes, array('isprint'));
-				$commentClosingNodes = array_merge($htmlCommentClosingNodes, array('!---' => '--->'));
+				$commentClosingNodes = array_merge($htmlCommentClosingNodes, array('!---' => '--->', '?demandware-pipeline' => '?>'));
 				
 				$translatebleAttributesList = array_merge($htmlTranslatebleAttributesList, array('bctext1', 'bctext2', 'bctext3', 'p_totallabel'));
 				
-				$allowedNodeInNodes = array('isif', 'iselse', 'iselseif', 'iscomment');
+				$allowedNodeInNodes = array('isif', 'iselse', 'iselseif', 'iscomment', 'isprint');
 				$noIndentNodes = array('iselse', 'iselseif');
 				
-				$ignoreAttributeNodes = array_merge($htmlIgnoreAttributeNodes, array('iscomment', '!---', 'isscript', 'isloop', 'isif'));
+				$ignoreAttributeNodes = array_merge($htmlIgnoreAttributeNodes, array('iscomment', '!---', 'isscript', 'isloop', 'isif', '?demandware-pipeline'));
 				
 				$parserRegexArray = array();
 				$parserRegexArray[Fileparser::$SEARCH_MODES['KEYS']] = array(

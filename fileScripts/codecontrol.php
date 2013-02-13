@@ -153,7 +153,7 @@
 			$cc->checkout($params->getFiles(), $params->getVal('b'));
 		// status
 		} else if ($params->getVal('st')) {
-			$cc->status();
+			$cc->status(false, $params->getVal('b')); // TODO Move the branch command out here
 		// log
 		} else if ($params->getVal('l')) {
 			$cc->log($params->getVal('l'));

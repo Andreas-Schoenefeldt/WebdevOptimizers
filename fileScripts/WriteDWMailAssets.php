@@ -99,6 +99,8 @@
 				
 				foreach($siteAssets as $name => $vars) {
 					
+					$io->out("\t".'> Writing ' . $name);
+					
 					fwrite($opFP, '<content content-id="' . $name . '">'. "\n");
 					fwrite($opFP, '<display-name xml:lang="x-default">' . $vars['displayName'] . '</display-name>'. "\n");
 					fwrite($opFP, '<online-flag>true</online-flag>'. "\n");
