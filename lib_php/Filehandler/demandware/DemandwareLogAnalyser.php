@@ -398,7 +398,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$interestingLine = 7101;
 				if($this->alyStatus['entryNumber'] == $interestingLine) {
 					d($this->alyStatus);
-					$this->io->read();
+					//$this->io->read();
 				}
 				
 				switch($this->alyStatus['errorType']){
@@ -532,7 +532,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				if($this->alyStatus['entryNumber'] == $interestingLine) {
 					d($this->alyStatus);
-					$this->io->read();
+					// $this->io->read();
 				}
 				
 			} else {
