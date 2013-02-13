@@ -449,12 +449,12 @@ class ResourceFileHandler {
 	
 	
 	function resourceKeyExists($key, $namespace = false){
+		
 		if (is_bool($key)) {
 			return false;
 		}
 		
 		$namespace = ($namespace) ? $namespace : $this->getBestResourceKeyNamespace($key);
-		
 		
 		if ($namespace) {
 			$this->importNamespace($namespace);
@@ -470,12 +470,14 @@ class ResourceFileHandler {
 			}
 		} else {
 			$parts = explode('.', $key);
+			
 			for ($i = 0; $i < count($parts); $i++) {
 				if (array_key_exists($parts[$i], $this->localisationMap)) {
 					return $parts[$i];
 				}
 			}
 			$oldDefaultFile = $this->getDefaultFile();
+			$this->io->out("We could not find a proper recource file for the unknown key " . $key . " in the project. Please select a fitting one.");
 			if ($this->setDefaultFile(true)) {
 				d($key);
 				d($this->getDefaultFile());
@@ -485,6 +487,7 @@ class ResourceFileHandler {
 			$this->currentDefaultFile = $oldDefaultFile;
 			
 		}
+		
 		return null;
 	}
 	

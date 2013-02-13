@@ -404,6 +404,8 @@ class PseudoXML extends PseudoText{
 	 */
 	function handleComment($part, $nodeName, $commentClosingString){
 		
+		// d('handle comment: ' . $part .', name ' . $nodeName . ', closedBy ' .$commentClosingString);
+		
 		if ($part === false) return false;
 		
 		$closePos = strpos($part, $commentClosingString);
@@ -562,6 +564,8 @@ class PseudoXML extends PseudoText{
 	 */
 	function addNode($name, $mode, $nodeType, $attributes = array(), $commentType = 'none', $text = '', $type = 'normal'){
 		
+		// d('add ' .$name . ', mode ' . $mode . ', nodeType ' . $nodeType. ', type ' . $type);
+		
 		if ($this->currentNode->closed == false && $type !=  'nodeInNode') {
 			$this->fatal('Unclosed Node was not closed. Check your markup in line ' . $this->currentLineNumber . '.', 'PseudoXML');
 		}
@@ -569,6 +573,8 @@ class PseudoXML extends PseudoText{
 		// if the node is only allowded to be a singele node, we assume a single node and go one like this.
 		if (in_array($name, $this->forcedSingleNodes)) $mode = 'single';
 		if (in_array($name, $this->forcedOpenNodes)) $mode = 'open';
+		
+		// d($mode);
 		
 		$node = $this->createNode($name, $mode, $nodeType, $attributes, $commentType, $text);
 		
@@ -628,7 +634,7 @@ class PseudoXML extends PseudoText{
 	
 	function closeNode($nodeName){
 		
-		// d($this->currentNode->nodeName .' : ' . $nodeName);
+		 // d($this->currentNode->nodeName .' : ' . $nodeName);
 		
 		if ($this->currentNode->nodeName == $nodeName) {
 				$this->currentNode = $this->currentNode->nodeParent;

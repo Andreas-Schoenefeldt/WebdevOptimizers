@@ -9,7 +9,9 @@ require_once(str_replace('//','/',dirname(__FILE__).'/') .'CodeControlWrapper.ph
  * ----------------------------------------------------------------------- */
 class GitWrapper extends CodeControlWrapper {
 	
-	function status($short = false){
+	function status($short = false, $branch = false){
+		if ($branch) $this->execute('git branch'); // show the brnaches
+		
 		$command = 'git status';
 		if ($short) $command .= ' -s';
 		$this->execute($command);

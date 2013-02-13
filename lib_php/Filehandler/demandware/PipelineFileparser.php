@@ -52,7 +52,7 @@ class PipelineFileparser extends XMLFileparser {
 			case 'key-binding':
 				$val = $node->getAttribute('alias');
 				if ($val != 'null') {
-					$val = str_replace('&quot;', '"', $val);
+					$val = str_replace('&quot;', '"', $val);	
 					$this->processTranslationKeyString($val, $node->lineNumber);
 				}
 				break;

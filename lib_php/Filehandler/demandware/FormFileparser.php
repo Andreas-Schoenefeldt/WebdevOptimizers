@@ -7,6 +7,8 @@ class FormFileparser extends XMLFileparser {
 	var $translatableFormAttributes = array('label', 'missing-error', 'value-error', 'parse-error', 'range-error', 'description');
 	
 	function __construct($file, $structureInit, $mode, $environment) {
+		
+		$structureInit['translatebleAttributesList'] = $this->translatableFormAttributes; // override the translatable attributes in order to make the writing of the formas take the tranlsation into account
 		parent::__construct($file, $structureInit, $mode, $environment);
 	}
 	
@@ -52,8 +54,10 @@ class FormFileparser extends XMLFileparser {
 			case 'field':
 				
 				for ($i = 0; $i < count($this->translatableFormAttributes); $i++){
-					if($attr = $node->attr($this->translatableFormAttributes[$i])) {
-						$this->addTranslationKey($attr, 'forms', $node->lineNumber);
+					if($value = $node->attr($this->translatableFormAttributes[$i])) {
+						if (! $this->loocksLikeTranslationKey($value)) $this->processTranslationValueString($value, $node->lineNumber);
+						
+						// $this->addTranslationKey($attr, 'forms', $node->lineNumber);
 					}
 				}
 				
@@ -61,11 +65,27 @@ class FormFileparser extends XMLFileparser {
 				
 				break;
 			case 'option':
-				if($attr = $node->attr('label')) {
-					$this->addTranslationKey($attr, 'forms', $node->lineNumber);
+				if($value = $node->attr('label')) {
+					if (! $this->loocksLikeTranslationKey($value)) $this->processTranslationValueString($value, $node->lineNumber);
+					//$this->addTranslationKey($attr, 'forms', $node->lineNumber);
 				}
 				break;
 		}
+	}
+	
+	function getTranslationString($text) {
+		$valObj = $this->resourceFileHandler->getKeyByValue($text);
+		if ($valObj) {
+			
+			for ($i = 0; $i < count($valObj); $i++) { // check out if we find a form
+				$obj = $valObj[$i];
+				if ($obj['namespace'] == 'forms') return $obj['key'];
+			}
+			
+			$this->io->error('There is no translation for ' . $text . ' in the required forms namespace.' );
+		}
+		
+		return $text;
 	}
 
 }

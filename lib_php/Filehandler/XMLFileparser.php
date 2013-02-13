@@ -59,7 +59,7 @@ class XMLFileparser extends Fileparser {
 					// only translate attributes that could possibly have user relevant text inside
 					if ($value->nodeType == 'text') {
 						if ( in_array($key, $this->structureInit['translatebleAttributesList']) && ( in_array( $node->getAttribute('type'), $this->structureInit['translatebleInputTypeList']) || $node->nodeName != 'input' )) {
-							$tVal = $this->resourceFileHandler->getTranslationString($value->text, $this->file->fileSystemLocation);
+							$tVal = $this->getTranslationString($value->text);
 						} else {
 							$tVal = $value->text;
 						}
@@ -151,12 +151,17 @@ class XMLFileparser extends Fileparser {
 				
 				break;
 			case 'text':
-				$str .= ($node->nodeParent && $node->nodeParent->translatable) ?  $this->resourceFileHandler->getTranslationString($node->text, $this->file->fileSystemLocation) : $node->text;
+				$str .= ($node->nodeParent && $node->nodeParent->translatable) ?  $this->getTranslationString($node->text) : $node->text;
 				break;
 			
 		}
 		
 		return $str;
+	}
+	
+	// a wrapper to get the translation string in order to make it possible to override the function in child classes
+	function getTranslationString($text) {
+		return $this->resourceFileHandler->getTranslationString($text, $this->file->fileSystemLocation);
 	}
 }
 

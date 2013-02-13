@@ -244,10 +244,7 @@ if (array_key_exists('" . str_replace("'", "\\'", func_get_arg(func_num_args() -
 		
 		$extractMode = self::$EXTRACT_MODES['KEYS'];
 		$searchMode = (!$searchMode) ?  self::$SEARCH_MODES['KEYS'] : $searchMode;
-		
-		
-		
-		if ($searchMode == self::$SEARCH_MODES['KEYS_WITH_VARIABLES'] || $this->resourceFileHandler->resourceKeyExists($key, $assumed_namespace)) {
+		if ($searchMode == self::$SEARCH_MODES['KEYS_WITH_VARIABLES'] || $this->resourceFileHandler->resourceKeyExists($key, $assumed_namespace)) { // is it a known key?
 			if (! $assumed_namespace) $assumed_namespace = $this->resourceFileHandler->getBestResourceKeyNamespace($key);
 			
 			if (! array_key_exists($searchMode, $this->dataMap[$extractMode])) $this->dataMap[$extractMode][$searchMode] = array();
@@ -620,9 +617,8 @@ if (array_key_exists('" . str_replace("'", "\\'", func_get_arg(func_num_args() -
 	function printChangedFile($onlyToScreen = false){
 		// writing the changed file
 		
-		$this->printDoc();
-		
-		d($this->getFileString($this->fileNodes->doc));
+		// $this->printDoc();
+		// d($this->getFileString($this->fileNodes->doc));
 		
 		if ($this->fileChanged) {
 			$this->io->cmd_print(">". (($onlyToScreen) ? '': ' writing') .' ' . $this->fileNodes->filename, true, 1);

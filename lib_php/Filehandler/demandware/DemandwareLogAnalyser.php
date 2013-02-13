@@ -137,7 +137,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 						
 						if (count($matchesHead > 2)) {
 							$this->alyStatus['errorType'] = $matchesHead[1];
-							$this->alyStatus['entry'] = $matchesHead[2];
+							$this->alyStatus['entry'] = $matchesHead[1] . ' ' . $matchesHead[2];
 						}
 						
 						$message = $description[1];

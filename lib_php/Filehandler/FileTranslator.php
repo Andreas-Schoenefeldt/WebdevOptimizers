@@ -148,7 +148,7 @@ class FileTranslator {
 		}
 		
 		$this->resourceFileHandler->currentDefaultFile = null; // reset of the default file
-					
+		
 		// printing of the possible ignored files
 		$this->updateProjectConfig();
 	}
@@ -188,7 +188,8 @@ class FileTranslator {
 		$mode = 'list';
 		
 		while ($line = fgets($fp, 2048)) {
-			$parts = explode('//', $line, 2); // remove simple comments
+			
+			$parts = ($mode != 'IGNORED_VALUES') ? explode('//', $line, 2) : array($line); // remove simple comments if we are above the ignored comments mode
 			$parts = explode(':', $parts[0], 2);
 			$name = trim($parts[0]);
 			
@@ -218,7 +219,6 @@ class FileTranslator {
 			
 		}
 		fclose($fp);
-		
 		$this->resourceFileHandler->setIgnoreMap($ignoredValues);
 	}
 	
@@ -227,7 +227,9 @@ class FileTranslator {
 	 *
 	 */
 	function updateProjectConfig(){
+		
 		if ($this->resourceFileHandler->ignoreWriteMapChanged) {
+			
 			$fp = fopen($this->configFileName, 'r');
 			$lines = array();
 			
