@@ -1,4 +1,5 @@
 <?php
+	
 	date_default_timezone_set("Europe/Berlin");
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Debug/libDebug.php');
@@ -32,7 +33,6 @@
 	);
 	
 	$configFileName = $params->getFileName();
-	
 	if(! file_exists($configFileName)) {
 		$params->print_usage();
 		$io->fatal("The config file " . $configFileName . " does not exist.", 'CreateSeleniumTestSuite');

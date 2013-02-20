@@ -403,7 +403,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				switch($this->alyStatus['errorType']){
 					default:
-						if ($errorLineLayout == 'extended' && count($messageParts) > 2) $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
+						if ($errorLineLayout == 'extended' && count($messageParts) > 2) $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[1]))] = true;
 						break;
 					case 'TypeError':
 					case 'com.demandware.beehive.core.capi.pipeline.PipeletExecutionException':
@@ -413,17 +413,16 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					case 'ISH-CORE-2354':
 						
 						if ($errorLineLayout == 'extended') {
-						
 							switch ($messageParts[0]) {
 								default:
 									$pipeline = $messageParts[3];
-									$siteID = $this->extractSiteID(trim($messageParts[2]));
+									$siteID = $this->extractSiteID(trim($messageParts[1]));
 									break;
 								case 'JobThread':
 									
 									$partlets = explode(' ', $messageParts[3]);
 									$pipeline = trim($partlets[0]);
-									$siteID = $this->extractSiteID(trim($partlets[4]));
+									$siteID = $this->extractSiteID(trim($partlets[2]));
 									
 									break;
 							}
@@ -441,7 +440,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					case 'ISH-CORE-2368':
 					case 'ISH-CORE-2355':
 						$this->alyStatus['entry'] = ($errorLineLayout == 'extended') ? $messageParts[3] . ' > ' : '';
-						if ($errorLineLayout == 'extended') $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
+						if ($errorLineLayout == 'extended') $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[1]))] = true;
 						break;
 					
 					// Job errors
@@ -789,7 +788,6 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	}
 	
 	function extractSiteID($siteString) {
-		
 		if (startsWith($siteString, 'Sites-') && endsWith($siteString, '-Site')) {
 		
 			$result = substr($siteString, 6);
