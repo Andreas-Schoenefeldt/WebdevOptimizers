@@ -96,11 +96,17 @@
 		$mergeKeys = array();
 		$indexes = array();
 		
+		$io->out('> Opening the new translation csv file ' . $params->getVal('f'));
 		// read the mergefile
 		$mergefile = fopen($params->getVal('f'), 'r');
 		
 		$line = fgets($mergefile);
 		$parts = explode(';', $line);
+		
+		if (count($parts) < 2) {
+			$io->error('Is your file valid? The cells have to be seperated with ;');
+			d($parts);
+		} 
 		
 		// build the keymap
 		for ($i = 1; $i < count($parts); $i++) {

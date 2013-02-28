@@ -390,7 +390,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			if (count($parts) > 1) {
 				
 				$this->alyStatus['entry'] = trim($parts[1]);
-				$messageParts = ($isExtended) ? explode('|', trim(substr(str_replace('ERROR', '', $parts[0]), 29))): array(); // 0 => basic description, 1 => timestamp?, 2 => Site, 3 => Pipeline, 4 => another description? 5 => Cryptic stuff
+				$messageParts = ($isExtended) ? explode('|', trim(str_replace('ERROR', '', $parts[0]))): array(); // 0 => basic description, 1 => timestamp?, 2 => Site, 3 => Pipeline, 4 => another description? 5 => Cryptic stuff
 				
 				// d($line);
 				$this->extractMeaningfullData();
@@ -403,7 +403,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				switch($this->alyStatus['errorType']){
 					default:
-						if ($errorLineLayout == 'extended' && count($messageParts) > 2) $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[1]))] = true;
+						if ($errorLineLayout == 'extended' && count($messageParts) > 2) $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
 						break;
 					case 'TypeError':
 					case 'com.demandware.beehive.core.capi.pipeline.PipeletExecutionException':
@@ -416,13 +416,13 @@ class DemandwareLogAnalyser extends FileAnalyser {
 							switch ($messageParts[0]) {
 								default:
 									$pipeline = $messageParts[3];
-									$siteID = $this->extractSiteID(trim($messageParts[1]));
+									$siteID = $this->extractSiteID(trim($messageParts[2]));
 									break;
 								case 'JobThread':
 									
 									$partlets = explode(' ', $messageParts[3]);
 									$pipeline = trim($partlets[0]);
-									$siteID = $this->extractSiteID(trim($partlets[2]));
+									$siteID = $this->extractSiteID(trim($partlets[4]));
 									
 									break;
 							}
@@ -440,7 +440,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					case 'ISH-CORE-2368':
 					case 'ISH-CORE-2355':
 						$this->alyStatus['entry'] = ($errorLineLayout == 'extended') ? $messageParts[3] . ' > ' : '';
-						if ($errorLineLayout == 'extended') $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[1]))] = true;
+						if ($errorLineLayout == 'extended') $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
 						break;
 					
 					// Job errors
