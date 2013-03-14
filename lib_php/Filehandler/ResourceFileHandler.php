@@ -55,6 +55,22 @@ class ResourceFileHandler {
 		return ($mode == $this->resourceFileParsingMode || $this->resourceFileParsingMode == 'both');
 	}
 	
+	// Returns all the localized key value pairs of the default location for this namespace
+	function getPreferedLocalisationMap($namespace) {
+		foreach ($this->localisationMap[$namespace] as $rootfolder => $locales) {
+			if ($this->isPreferedLocation($rootfolder)) return $locales;
+		}
+		
+		
+		// if we have not found a prefered one, we return the first entry
+		foreach ($this->localisationMap[$namespace] as $rootfolder => $locales) {
+			return $locales;
+		}
+		
+		// in case it was empty
+		return array();
+	}
+	
 	/**
 	 * @param Array $preferedPropertieLocations		-	Array of the target Resource File root folders for Key adds
 	 */

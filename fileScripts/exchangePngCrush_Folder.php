@@ -58,8 +58,9 @@
 				$reducedName = str_replace('_crushed', '', $pathCrumbs[count($pathCrumbs) - 1]);
 				
 				$ext = pathinfo($filepath, PATHINFO_EXTENSION);
+				$lower_ext = strtolower($ext);
 				
-				if (in_array($ext, array('png', 'jpg', 'jpeg'))){
+				if (in_array($lower_ext, array('png', 'jpg', 'jpeg'))){
 					if(uncrushed($filepath, $hiddenpath)){
 						
 						clearstatcache();
@@ -69,7 +70,7 @@
 						$target = str_replace('.' . $ext, '_crushed.' . $ext, $filepath);
 						
 						// use the power of the comand line tool, to handle the suported image files		
-						switch ($ext) {
+						switch ($lower_ext) {
 							case 'png':
 								
 								exec ('pngcrush -e _crushed.png -brute -rem alla -reduce "'.$filepath.'"');
