@@ -630,7 +630,6 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				, 'type' => 'Invalid Customer password update'
 				, 'weight'	=> 0
 				, 'solve' => function($definition, $alyStatus){
-					d($alyStatus);
 					$alyStatus['data']['passwords'][substr($alyStatus['entry'], 80, -1)] = true;
 					$alyStatus['entry'] = substr($alyStatus['entry'], 0, 78);
 					return $alyStatus;
