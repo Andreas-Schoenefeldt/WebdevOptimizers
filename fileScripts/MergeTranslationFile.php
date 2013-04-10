@@ -1,5 +1,6 @@
 #!/usr/local/bin/php -q
 <?php
+	
 	date_default_timezone_set("Europe/Berlin");
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
@@ -16,6 +17,7 @@
 				'values' => array(
 					'demandware' => array('name' => 'dw'),
 					'grails' => array('name' => 'g'),
+					'openCMS' => array('name' => 'ocms')
 				),
 				
 				'description' => 'Defines the software environment of your project.'
@@ -58,8 +60,9 @@
 			case 'demandware':
 				// config
 				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'cartridges';
-				
-				
+				break;
+			case 'openCMS':
+				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'modules';
 				break;
 		}
 		
@@ -88,6 +91,7 @@
 		
 		// read the projects configuration file, if existend
 		$configFileName = $appRootPath . '/.translation.config';
+		$config = array();
 		if (file_exists($configFileName)){
 			$io->out("\n> found a config file " . $configFileName);
 			$config = readConfig($configFileName);
@@ -102,29 +106,40 @@
 		if ($params->getVal('x')) {
 			
 			$namespace = $params->getVal('x');
-			$seperator = '|';
-			$mergefile = fopen($params->getVal('f'), 'w');
 			
-			$locals = $resourceFileHandler->getPreferedLocalisationMap($namespace);
-			
-			// write the header
-			$header = array('keys');
-			foreach ($locals as $locale => $stats) {
-				$header[] = $locale;
-			}
-			fwrite($mergefile, join($seperator, $header) . PHP_EOL);
-			
-			// write the file
-			
-			foreach ($locals['default']['keys'] as $key => $translation) {
-				$line = array($key);
+			if (array_key_exists($namespace, $resourceFileHandler->localisationMap)) {
+				$io->out("> exporting namespace $namespace to file " . $params->getVal('f'));
+				$mergefile = fopen($params->getVal('f'), 'w');
+				$locals = $resourceFileHandler->getPreferedLocalisationMap($namespace);
+				
+				// write the header
+				$header = array('keys');
 				foreach ($locals as $locale => $stats) {
-					$line[] = array_key_exists($key, $locals[$locale]['keys']) ? $locals[$locale]['keys'][$key] : '';
+					$header[] = $locale;
 				}
-				fwrite($mergefile, join($seperator, $line) . PHP_EOL);
+				fputcsv($mergefile, $header);
+				
+				// write the file
+				
+				foreach ($locals['default']['keys'] as $key => $translation) {
+					$line = array($key);
+					foreach ($locals as $locale => $stats) {
+						switch($params->getVal('e')) {
+							default:
+								$line[] = array_key_exists($key, $locals[$locale]['keys']) ? $locals[$locale]['keys'][$key] : '';
+								break;
+							case 'openCMS':
+								$line[] = array_key_exists($key, $locals[$locale]['keys']) ? unicode_conv($locals[$locale]['keys'][$key]) : '';
+								break;
+						}
+					}
+					fputcsv($mergefile, $line);
+				}
+				
+				fclose($mergefile);
+			} else {
+				$io->fatal("The namespace $namespace was not found among the paresed resource files.");
 			}
-			
-			fclose($mergefile);
 			
 		} else {
 		
@@ -135,11 +150,10 @@
 			// read the mergefile
 			$mergefile = fopen($params->getVal('f'), 'r');
 			
-			$line = fgets($mergefile);
-			$parts = explode(';', $line);
+			$parts = fgetcsv($mergefile);
 			
 			if (count($parts) < 2) {
-				$io->error('Is your file valid? The cells have to be seperated with ;');
+				$io->fatal('Is your file valid? The cells have to be seperated with ;');
 				d($parts);
 			} 
 			
@@ -150,9 +164,8 @@
 			}
 			
 			$lineNumber = 1;
-			while ($line = fgets($mergefile)) {
+			while ($parts = fgetcsv($mergefile)) {
 				$lineNumber++;
-				$parts = explode(';', $line);
 				$key = trim($parts[0]);
 				for ($i = 1; $i < count($parts); $i++) {
 					/* // old file syntax
@@ -232,5 +245,14 @@
 		
 		return $config;
 	}
+	
+	
+	function unicode_conv($originalString) {
+		global $io;
+		
+		return json_decode('"' . html_entity_decode($originalString) .'"');
+	}
+	
+	
 
 ?>

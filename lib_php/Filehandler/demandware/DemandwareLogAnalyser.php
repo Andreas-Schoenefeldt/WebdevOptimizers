@@ -134,8 +134,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					default:
 						
 						preg_match('/^(.*)(\(.*?,.*?,.*?\))$/', $this->alyStatus['errorType'], $matchesHead);
-						
-						if (count($matchesHead > 2)) {
+						if (count($matchesHead) > 2) {
 							$this->alyStatus['errorType'] = $matchesHead[1];
 							$this->alyStatus['entry'] = $matchesHead[1] . ' ' . $matchesHead[2];
 						}

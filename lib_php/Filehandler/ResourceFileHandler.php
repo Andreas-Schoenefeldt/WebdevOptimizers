@@ -181,6 +181,8 @@ class ResourceFileHandler {
 				case 'demandware':
 					if ( ! (in_array('resources', $nsChunks) && in_array('templates', $nsChunks))) return false; // only take demandware resource files, that are located in a templates / resources folder
 					break;
+				case 'openCMS':
+					break;
 			}
 			
 			// get the namespace

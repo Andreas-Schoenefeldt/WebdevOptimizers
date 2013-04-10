@@ -131,12 +131,7 @@ class FixedFieldFileWriter {
 	
 	// Returns the actual computed, filled and alignes field value
 	function getFieldValue($val){
-		
-		if ($val === '0' ) {
-			d('om');
-			die();
-		}
-			
+					
 		if ($val === null) $val = $this->getFieldDefinitionValue('default');
 		
 			
@@ -195,6 +190,7 @@ class FixedFieldFileWriter {
 					}
 					break;
 				case 'date';
+					$val = str_replace(' ', '', $val); // clean the input
 					$val = $val ? date_create_from_format($this->getFieldDefinitionValue('input-format') ? $this->getFieldDefinitionValue('input-format') : $this->getFieldDefinitionValue('format'), $val)->getTimestamp() : null;
 					break;
 				case 'Boolean':

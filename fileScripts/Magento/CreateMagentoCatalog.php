@@ -20,10 +20,17 @@
 			),
 			'o' => array(
 				'name' => 'output',
-				'datatype' => 'Sting',
-				'default' => 'magento_import' . date('Y_m_d_h_i') . '.csv',
+				'datatype' => 'String',
+				'default' => 'magento_import_' . date('Y_m_d_h_i') . '.csv',
 				
 				'description' => 'The import filename'
+				
+			),
+			'xi' => array(
+				'name' => 'export_inventory',
+				'datatype' => 'String',
+				
+				'description' => 'The inventory filename. If leaft blank, no inventory will be exported'
 				
 			),
 		),
@@ -50,9 +57,25 @@
 		if (! file_exists($inputFilePath)) {
 			$io->fatal("The given input file " . $inputFilePath . 'does not exist.');
 		}
-		$io->out('> Writing file ' . $outputFilePath);
 		
-		$writer = new FixedFieldFileWriter($mappingConfig, $outputFilePath);
+		$exportCounter = 0;
+		$outFileName = $outputFilePath . 'magento_import_' . $exportCounter . '.csv';
+		$io->out('> Writing file ' . $outFileName);
+		
+		$writer = new FixedFieldFileWriter($mappingConfig, $outFileName);
+		
+		$inventory = array();
+		$inventoryExportFile = $params->getVal('xi') ? $params->getVal('xi') : $outputInventoryFilePath;
+		if ($inventoryExportFile) {
+			$invenotryWriter = new FixedFieldFileWriter($inventoryMappingConfig, $inventoryExportFile);
+			$invenotryWriter->printHeader();
+			
+			// read the inventory
+			$inventory = read_inventory($inventoryDefinitionPath, $invenotryWriter);
+		} else {
+			$io->error("You are missing the inventory output file definiton. Inventory will be ignored.");
+		}
+		
 		$input = fopen($inputFilePath, 'r');
 		
 		$writer->printHeader();
@@ -60,7 +83,11 @@
 		// getting the header -> index relation
 		$headers = fgetcsv($input);
 		
+		$lineCounter = 0;
+		$productCounter = 0;
 		while (($data = fgetcsv($input)) !== FALSE) {
+			$lineCounter++;
+			
 			$configurableProductIdentifyerArr = array();
 			$configProdArrayValues = array( '_super_products_sku' => array());
 			$line = array();
@@ -70,6 +97,22 @@
 				$value = $writer->parseInput($data[$i], $name);
 				
 				if (! is_array($value)) {
+					
+					switch ($name) {
+						case $new_to_definition_attr['name']:
+							if ($value) {
+								$now = time() - 86400; // yesterday
+								$line['news_from_date'] = $now;
+								$configProdLine['news_from_date'] = $now;
+							}
+							break;
+						case 'Kurzbeschreibung':
+							if (strlen($value) > 170) {
+								$value = substr($value, 0, 170) . '...';
+								$io->warn("Short description is too long. Cutted at char 170.", "Line: " . $lineCounter);
+							}
+							break;
+					} 					
 					$line[$name] = $value;
 					$configProdLine[$name] = $value;
 				} else if (is_array($value) && $name == $configurable_product_attr['name']){
@@ -82,25 +125,27 @@
 				} else {
 					// what to do with all the other arrays
 					
-					if ($name == $image_definition_attr['name']) {
-						$configProdArrayValues['_media_position'] = array(); // add the image media position, as it was added in the import file
-						$configProdArrayValues['_media_attribute_id'] = array();
-						$configProdArrayValues['_media_is_disabled'] = array();
-						$verifyedValue = array();
-						for ($k = 0; $k < count($value); $k++) {
-							
-							// moving the images at this point already
-							$magentoFilePath = generateAndMoveToMagentoImagePath($image_src_path, $image_target_path, $value[$k]);
-							
-							if ($magentoFilePath) {
-								$verifyedValue[] = $magentoFilePath;
-								$configProdArrayValues['_media_position'][] = $k + 1;
-								$configProdArrayValues['_media_attribute_id'][] = 88;
-								$configProdArrayValues['_media_is_disabled'][] = 0;
+					switch ($name) {
+						case $image_definition_attr['name']:
+							$configProdArrayValues['_media_position'] = array(); // add the image media position, as it was added in the import file
+							$configProdArrayValues['_media_attribute_id'] = array();
+							$configProdArrayValues['_media_is_disabled'] = array();
+							$verifyedValue = array();
+							for ($k = 0; $k < count($value); $k++) {
+								
+								// moving the images at this point already
+								$magentoFilePath = generateAndMoveToMagentoImagePath($image_src_path, $image_target_path, $value[$k]);
+								
+								if ($magentoFilePath) {
+									$verifyedValue[] = $magentoFilePath;
+									$configProdArrayValues['_media_position'][] = $k + 1;
+									$configProdArrayValues['_media_attribute_id'][] = 88;
+									$configProdArrayValues['_media_is_disabled'][] = 0;
+								}
 							}
-						}
-						
-						$value = $verifyedValue;
+							
+							$value = $verifyedValue;
+							break;
 					}
 					
 					$configProdArrayValues[$name] = $value;
@@ -113,6 +158,16 @@
 				$line[$skuFieldName] = $configProdLine[$skuFieldName] ;
 				$line[$configurable_product_attr['name']] = $configurableProductIdentifyerArr[0];
 				$line['visibility'] = 4;
+				
+				// setting the inventory
+				if (array_key_exists($line[$skuFieldName], $inventory)) {
+					$line[$inventory_definition_attr['name']] = $inventory[$line[$skuFieldName]]['qty'];
+					if ($inventory[$line[$skuFieldName]]['qty'] > 0) {
+						$line[$in_stock_definition_attr['name']] = 1;
+					} else {
+						$line[$in_stock_definition_attr['name']] = 0;
+					}
+				}
 				
 				// setting up the images
 				// TODO: What about more the one image?
@@ -127,18 +182,52 @@
 					$line['_media_is_disabled'] = 0;
 				}
 				
+				$maxcount = 0;
+				foreach ($configProdArrayValues as $name => $values) {
+					if(count($values) > $maxcount) $maxcount = count($values); // to now how many option lines we have to write
+					if(count($values) > 0) $line[$name] = $values[0];
+				}
+				
 				$writer->printLine($line);
+				$productCounter++;
+				
+				if ($inventoryExportFile) {
+					$inventoryLine[$skuFieldName] = $configProdLine[$skuFieldName];
+					$invenotryWriter->printLine($line);
+				}
 				
 			} else {
+				
+				$configProdArrayValues['_super_attribute_price_corr'] = array();
+				
 				// writing the simple products for the configurable products
 				for ($i = 0; $i < count($configurableProductIdentifyerArr); $i++) {
+					
+					$allProductsOutOfStock = true;
 					
 					$line[$skuFieldName] = $configProdLine[$skuFieldName] . '-' . $configurableProductIdentifyerArr[$i];
 					$line[$configurable_product_attr['name']] = $configurableProductIdentifyerArr[$i];
 					
 					$configProdArrayValues['_super_products_sku'][] = $line[$skuFieldName];
 					
+					// setting the inventory
+					if (array_key_exists($line[$skuFieldName], $inventory)) {
+						$line[$inventory_definition_attr['name']] = $inventory[$line[$skuFieldName]]['qty'];
+						$configProdArrayValues['_super_attribute_price_corr'][] = $inventory[$line[$skuFieldName]]['price_correction'];
+						if ($inventory[$line[$skuFieldName]]['qty'] > 0) {
+							$allProductsOutOfStock = false;
+							$line[$in_stock_definition_attr['name']] = 1;
+						} else {
+							$line[$in_stock_definition_attr['name']] = 0;
+						}
+					}
+					
 					$writer->printLine($line);
+					$productCounter++;
+					if ($inventoryExportFile) {
+						$inventoryLine[$skuFieldName] = $line[$skuFieldName];
+						$invenotryWriter->printLine($line);
+					}
 				}
 				
 				// setting up the configurable product
@@ -146,6 +235,7 @@
 				$configProdLine['has_options'] = 1;
 				$configProdLine['required_options'] = 1;
 				$configProdLine['visibility'] = 4;
+				if (! $allProductsOutOfStock) $configProdLine[$in_stock_definition_attr['name']] = 1;
 				$configProdLine['qty'] = 0;
 				
 				// setting up the images
@@ -163,26 +253,73 @@
 				
 				// writing the configurable product
 				$writer->printLine($configProdLine);
-				
-				// we start with 1, because the first options are already in the
-				for ($i = 1; $i < $maxcount; $i++) {
-					$optionLine = array();
-					foreach ($configProdArrayValues as $name => $values) {
-						if ($i < count($values)) $optionLine[$name] = $values[$i];
-					}
-					$writer->printLine($optionLine, 'configurableProduct');
-				}
-				
+				$productCounter++;
 				
 			}
+			
+			// we print the option lines for all products, that have it
+			// we start with 1, because the first options are already in the first line
+			for ($i = 1; $i < $maxcount; $i++) {
+				$optionLine = array();
+				foreach ($configProdArrayValues as $name => $values) {
+					if ($i < count($values)) $optionLine[$name] = $values[$i];
+				}
+				$writer->printLine($optionLine, 'configurableProduct');
+			}
+			
+			if ($productCounter >= MAX_PRODUCT_PER_IMPORT_FILE) {
+				$writer->close();
+				
+				$exportCounter++;
+				$outFileName = $outputFilePath . 'magento_import_' . $exportCounter . '.csv';
+				$io->warn('> Reached product ' . $productCounter . ' starting new file ' . $outFileName, 'line ' . $lineCounter);
+				
+				$writer = new FixedFieldFileWriter($mappingConfig, $outFileName);
+				$writer->printHeader();
+				
+				$productCounter = 0;
+			}
+			
 		}
 		
 		$writer->close();
+		if ($inventoryExportFile) {
+			$invenotryWriter->close();
+		}
 		
 		
 	}
 	
+	// ----- Functions ------------------------------------
 	
+	
+	// a function in order to get a inventory. returns an array with SKU => Inventory
+	// @param FixexFieldFileWriter $invenotryWriter - The writer for parsing the values
+	function read_inventory($inventoryDefinitionCSVFilePath, $invenotryWriter) {
+		global $io;
+		$inventory = array();
+		if (! file_exists($inventoryDefinitionCSVFilePath)) {
+			$io->error("The inventory file does not exist for this catalog. All Products will have the default qty (possibly 0)");
+		} else {
+			$io->out("> reading inventory definition $inventoryDefinitionCSVFilePath");
+			
+			$file = fopen($inventoryDefinitionCSVFilePath, 'r');
+			$headers = fgetcsv($file); // get the header
+			while (($data = fgetcsv($file)) !== FALSE) {
+				$line = array();
+				for ($i = 0; $i < count($data); $i++) {
+					$name = $headers[$i];
+					$value = $invenotryWriter->parseInput($data[$i], $name);
+					
+					$line[$name] = $value;
+				}
+				
+				$inventory[$line['Artikelnummer']] = array('qty' => $line['Anzahl'], 'price_correction' => $line['Preisanpassung']);
+			}
+		}
+		
+		return $inventory;
+	}
 	
 	// this function will applay all the Magento transition, which is also done by the image upload
 	function generateAndMoveToMagentoImagePath($image_src_path, $image_target_path, $image_name) {
