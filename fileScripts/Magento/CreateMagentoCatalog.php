@@ -204,7 +204,7 @@
 				for ($i = 0; $i < count($configurableProductIdentifyerArr); $i++) {
 					
 					$allProductsOutOfStock = true;
-					
+					$line['Kategorie'] = ''; // we are removing the Kategorie for this products, because only the configurable one should show up in the Kategory Sort area
 					$line[$skuFieldName] = $configProdLine[$skuFieldName] . '-' . $configurableProductIdentifyerArr[$i];
 					$line[$configurable_product_attr['name']] = $configurableProductIdentifyerArr[$i];
 					

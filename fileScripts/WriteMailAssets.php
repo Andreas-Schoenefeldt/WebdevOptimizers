@@ -278,14 +278,14 @@
 				preg_match_all('/\$url\([ ]*?["\'][ ]*?(?P<pipeline>.*?)[ ]*?["\'][ ]*?,[ ]*?["\'][ ]*?(?P<param>.*?)[ ]*?["\'],[ ]*?["\'][ ]*?(?P<value>.*?)[ ]*?["\'][ ]*?\)[ ]*?\$/', $string, $matches, PREG_PATTERN_ORDER);
 				
 				for ($i = 0; $i < count($matches[0]); $i++){
-					$url = 'http://' . $hostBase[$site] . '/on/demandware.store/Sites-' . $brand . '-' . $site .'-Site/' . $locale . '_' . $site . '/' . $matches['pipeline'][$i] . '?' . $matches['param'][$i] . '=' .  $matches['value'][$i];
+					$url = 'http://' . $hostBase[$site] . '/on/demandware.store/Sites-' . $brand . '-' . $site .'-Site/' . $this->locale . '_' . $site . '/' . $matches['pipeline'][$i] . '?' . $matches['param'][$i] . '=' .  $matches['value'][$i];
 					$string = str_replace($matches[0][$i], $url, $string);
 				}
 				
 				preg_match_all('/\$url\([ ]*?["\'][ ]*?(?P<pipeline>.*?)[ ]*?["\'][ ]*?\)[ ]*?\$/', $string, $matches, PREG_PATTERN_ORDER);
 				
 				for ($i = 0; $i < count($matches[0]); $i++){
-					$url = 'http://' . $hostBase[$site] . '/on/demandware.store/Sites-' . $brand . '-' . $site .'-Site/' . $locale . '_' . $site . '/' . $matches['pipeline'][$i];
+					$url = 'http://' . $hostBase[$site] . '/on/demandware.store/Sites-' . $brand . '-' . $site .'-Site/' . $this->locale . '_' . $site . '/' . $matches['pipeline'][$i];
 					$string = str_replace($matches[0][$i], $url, $string);
 				}
 			}
@@ -367,7 +367,6 @@
 	
 	
 	function processTemplate($string, $locale, $site, $vars, $entry, $templateDir, $outputMode) {
-		
 		global $siteAssets, $io, $brand, $hostBase;
 		
 		preg_match_all('/\${[ ]*?_t\([ ]*?["\'][ ]*?(?P<key>.*?)[ ]*?["\'][ ]*?\)[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
