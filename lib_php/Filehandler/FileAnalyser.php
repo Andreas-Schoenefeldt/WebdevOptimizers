@@ -118,6 +118,7 @@ class FileAnalyser {
 		$this->alyStatus = array(
 			  'timestamp' => $this->settings['timestamp']
 			, 'stacktrace' => ''
+			, 'entry' => '-'
 			, 'lineNumber' => $currentLineNumber
 			, 'fileIdent' => $fileIdent
 			, 'data' => array() // a map of data entrys

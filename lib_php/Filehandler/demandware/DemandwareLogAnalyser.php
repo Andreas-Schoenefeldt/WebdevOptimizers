@@ -733,10 +733,9 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				, 'weight' => 1
 				, 'solve' => function($definition, $alyStatus){
 					$entry = explode('Unknown category ID ', $alyStatus['entry'], 2);
-					$entry = explode(' ', $entry[1], 2);
-					
+					$entry = explode(' for implicit search filters given.', $entry[1], 2);
 					$alyStatus['data']['Category IDs'][trim($entry[0])] = true;
-					$alyStatus['entry'] = 'Unknown category ID ' . $entry[1];
+					$alyStatus['entry'] = 'Unknown category ID for implicit search filters given.';
 					return $alyStatus;
 				}
 			),
