@@ -590,7 +590,14 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				, 'type' => 'SEO URL mismatch'
 				, 'weight'	=> 1
 				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['data']['urls'][substr($alyStatus['entry'], strlen($definition['start']), -2)] = true;
+					
+					$urlPlusReferer = substr($alyStatus['entry'], strlen($definition['start']));
+					$parts = explode('} - Referer: ', $urlPlusReferer);
+					
+					if(count($parts) == 1)  $parts[0] = substr($parts[0], 0 , -1);
+					
+					$alyStatus['data']['urls'][$parts[0]] = true;
+					if(count($parts) > 1) $alyStatus['data']['referers'][$parts[1]] = true;
 					$alyStatus['entry'] = 'Unable to parse SEO url - no match found';
 					return $alyStatus;
 				}

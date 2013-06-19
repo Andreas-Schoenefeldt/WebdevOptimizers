@@ -153,7 +153,7 @@
 			$parts = fgetcsv($mergefile);
 			
 			if (count($parts) < 2) {
-				$io->fatal('Is your file valid? The cells have to be seperated with ;');
+				$io->fatal('Is your file valid? The cells have to be seperated with , and you need the hadlines in the file: default, fr, es, de for example.');
 				d($parts);
 			} 
 			
