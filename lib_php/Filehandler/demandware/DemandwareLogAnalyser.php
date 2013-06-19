@@ -594,7 +594,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					$urlPlusReferer = substr($alyStatus['entry'], strlen($definition['start']));
 					$parts = explode('} - Referer: ', $urlPlusReferer);
 					
-					if(count($parts) == 1)  $parts[0] = substr($parts[0], 0 , -1);
+					if(count($parts) == 1)  $parts[0] = substr($parts[0], 0 , -2);
 					
 					$alyStatus['data']['urls'][$parts[0]] = true;
 					if(count($parts) > 1) $alyStatus['data']['referers'][$parts[1]] = true;
