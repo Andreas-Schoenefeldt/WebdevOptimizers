@@ -7,11 +7,18 @@ class Mail {
 	
 	// sends mail regarding given parameters
 	public static function sendMail($recipient, $subject, $messge, $sender) {
-		return mail($recipient, $subject, $messge, $sender);
+		$headers  = "MIME-Version: 1.0\r\n";
+		$headers .= "Content-type: text/html; charset=utf-8\r\n";
+		$headers .= "From: " . strip_tags($sender) . "\r\n";
+		
+		return mail($recipient, $subject, $messge, $headers);
 	}
 	
 	// sends all DW specific mails in given alertMails object
-	public static function sendDWAlertMails($alertMails, $currentFolder, $alertConfiguration, $currentLayout) {
+	public static function sendDWAlertMails($analyser, $currentFolder, $alertConfiguration, $currentLayout) {
+		
+		$alertMails = $analyser->alertMails;
+		
 		if (!empty($alertMails)) {
 			$senderemailaddress = $alertConfiguration['senderemailaddress'];
 			$emailadresses = $alertConfiguration['emailadresses'];
@@ -40,11 +47,12 @@ class Mail {
 					$success=true;
 					//only send when not already sent before
 					if (!in_array($errorType.$threshold, $mailStorage)) {
-						d("<br/>mail [$errorType]");
+						d("mail [$errorType]");
+						
 						$success = Mail::sendMail(	join(',',$emailadresses), 
 									"$subject [$errorType] - ".$thresholdMail['subject'], 
-									"An alert has been raised by Log File Monitor!\n\nError Type: $errorType\n\n".$thresholdMail['message'], 
-									"From:" . $senderemailaddress
+									"<html><head></head><body><p>Error Type: $errorType</p><pre style=\"font:inherit;\">".$thresholdMail['message'] . '</pre><p><a href="' . $analyser->getResultFileName() . '" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>', 
+									$senderemailaddress
 								);
 					} 
 					// fill mail storage

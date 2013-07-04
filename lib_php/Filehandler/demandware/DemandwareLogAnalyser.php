@@ -185,6 +185,20 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				$this->alyStatus['timestamp'] = strtotime(substr($line, 1, 27));
 				$this->alyStatus['data']['dates'][substr($line, 1, 10)] = true;
 				$this->alyStatus['data']['GMT timestamps'][substr($line, 11, 6)] = true; // We only need a granularity by minute
+				
+				$techData = explode('|', $parts[0]);
+				
+				switch(count($techData)) {
+					default:
+						d('unknown techdata format');
+						d($techData);
+						break;
+					case 4:
+					case 6:
+						$this->alyStatus['data']['pipelines'][$techData[3]] = true;
+						break;
+				}
+				
 			} else {
 				$errorLineLayout = 'core_extract';
 				$parts = explode(':', $line, 2);

@@ -64,10 +64,16 @@
 		
 		// this is a remote connection, start the remote process
 		if ($params->getVal('r') || $params->getVal('l')) {
-		
-		$configBaseDir = (str_replace('//','/',dirname(__FILE__).'/') .'AnalyseLogfiles/');
-		
-		forEachFile($configBaseDir, '.*config.*\.php', true, 'processLogFiles');
+			
+			if (count($files) > 0) {
+				for ($i = 0; $i  < count($files); $i++) {
+					processLogFiles(getcwd() . '/' . $files[$i]);
+				}
+			} else {
+				// the default, if no explicit config is given
+				$configBaseDir = (str_replace('//','/',dirname(__FILE__).'/') .'AnalyseLogfiles/');
+				forEachFile($configBaseDir, '.*config.*\.php', true, 'processLogFiles');
+			}
 			
 		} else {
 			$analyser = new $class($files, 'error');
@@ -113,7 +119,6 @@
 				$timestamp = strtotime("$year-$month-$day 00:00:00.000 GMT");
 				if (! $params->getVal('d')) $timestamp += $config['dayoffset'] * 86400; // change the date by the number of days
 				
-				
 				$time = date($config['timestampformat'], $timestamp);
 				
 				for ($i = 0; $i < count($config['fileBodys']); $i++){
@@ -123,14 +128,6 @@
 					$results[$layout][] = $target;
 				}
 			}
-			
-			/*
-			if ($download) {
-				$io->out('> Unmounting ' . $mountpoint);
-				$command = 'umount -f ' . $mountpoint;
-				$lastline = system($command, $retval);
-			}
-			*/
 			
 			$htmlWorkingDir = $targetWorkingFolder . '/html';
 			if (! file_exists($htmlWorkingDir)) mkdir($htmlWorkingDir);
@@ -161,14 +158,16 @@
 			foreach ($results as $layout => $files) {
 				$analyser = new $class($files, $layout, $settings, $alertConfiguration);
 				
-				Mail::sendDWAlertMails($analyser->alertMails, $targetWorkingFolder, $alertConfiguration, $layout);
-				
 				$analyser->setWorkingDir($htmlWorkingDir);
 				$analyser->setTime($timestamp);
 				
 				$io->out('> Writing result for ' . $layout . ' files.');
 				$filename = $analyser->printResults('html');
 				fwrite($file, '<p><a href="'. $filename .'"><strong>'. $analyser->layout . ' logs</strong> ('.$analyser->getErrorCount().' different errors, '. $analyser->getAllErrorCount() .' total)</a></p>');
+				
+				$analyser->setResultFileName($webdavUrl . '/html/' . $filename);
+				
+				Mail::sendDWAlertMails($analyser, $targetWorkingFolder, $alertConfiguration, $layout);
 				
 				if ($download) upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, $filename);
 				

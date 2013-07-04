@@ -29,6 +29,8 @@ class FileAnalyser {
 	var $alyStatus = array(); // the current case analysation object
 	
 	var $alertMails = array();
+	
+	var $resultFileName = '';
 
 	function __construct($files, $environment, $layout, $settings)  {
 		$this->io = new CmdIO();
@@ -62,6 +64,9 @@ class FileAnalyser {
 			}	
 		}
 	}
+	
+	function setResultFileName($name){ $this->resultFileName = $name; }
+	function getResultFileName()     { return $this->resultFileName; }
 	
 	// function to convert "h:mm" to seconds
 	function getSecondsFromHoure($houreString){
