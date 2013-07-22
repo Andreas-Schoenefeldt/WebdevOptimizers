@@ -176,75 +176,82 @@
 				$locations[] = $location;
 			}
 			
+			// open all the suit files
+			for ($s = 0; $s < count($locations); $s++) {
+				$location = $locations[$s];
+				
+				// initialise suitefiles
+				for ($f = 0; $f < count($location['suiteFiles']); $f++) {
+					$suiteFile = $location['suiteFiles'][$f];
+					fwrite($suiteFile['fileHandler'], '<?xml version="1.0" encoding="UTF-8"?>' . "\n");
+					fwrite($suiteFile['fileHandler'], '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'. "\n");
+					fwrite($suiteFile['fileHandler'], '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">'. "\n");
+					fwrite($suiteFile['fileHandler'], '<head>'. "\n");
+					fwrite($suiteFile['fileHandler'], '	<meta content="text/html; charset=UTF-8" http-equiv="content-type" />'. "\n");
+					fwrite($suiteFile['fileHandler'], '	<title>' . $suiteFile['name'] . '</title>'. "\n");
+					fwrite($suiteFile['fileHandler'], '</head>'. "\n");
+					fwrite($suiteFile['fileHandler'], '<body>'. "\n");
+					fwrite($suiteFile['fileHandler'], '	<table id="suiteTable" cellpadding="1" cellspacing="1" border="1" class="selenium"><tbody>'. "\n");
+					fwrite($suiteFile['fileHandler'], '		<tr><td><b>' . $suiteFile['name'] .'</b></td></tr>'. "\n");
+				}
+			}
+			
+			
 			$count = count($this->pathConf);
 			for ($i = 0; $i < $count; $i++) {
 				
-				if ($i % 200 == 0) print '.';
+				if (! $this->withSmoketests() || in_array($i, $this->smoketests)) {
 				
-				$conf = $this->pathConf[$i];
-				$fileName = $this->getFilename();
-				
-				$c = $count . ''; $add = '';
-				while (strlen($add) < strlen($c) - strlen($i . '')) {
-					$add .= '0';
-				}
-				
-				for ($s = 0; $s < count($locations); $s++) {
+					if ($i % 200 == 0) print '.';
 					
-					$location = $locations[$s];
+					$conf = $this->pathConf[$i];
+					$fileName = $this->getFilename();
 					
-					// initialise suitefiles
-					if ($i == 0) {
-						for ($f = 0; $f < count($location['suiteFiles']); $f++) {
-							$suiteFile = $location['suiteFiles'][$f];
-							fwrite($suiteFile['fileHandler'], '<?xml version="1.0" encoding="UTF-8"?>' . "\n");
-							fwrite($suiteFile['fileHandler'], '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'. "\n");
-							fwrite($suiteFile['fileHandler'], '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">'. "\n");
-							fwrite($suiteFile['fileHandler'], '<head>'. "\n");
-							fwrite($suiteFile['fileHandler'], '	<meta content="text/html; charset=UTF-8" http-equiv="content-type" />'. "\n");
-							fwrite($suiteFile['fileHandler'], '	<title>' . $suiteFile['name'] . '</title>'. "\n");
-							fwrite($suiteFile['fileHandler'], '</head>'. "\n");
-							fwrite($suiteFile['fileHandler'], '<body>'. "\n");
-							fwrite($suiteFile['fileHandler'], '	<table id="suiteTable" cellpadding="1" cellspacing="1" border="1" class="selenium"><tbody>'. "\n");
-							fwrite($suiteFile['fileHandler'], '		<tr><td><b>' . $suiteFile['name'] .'</b></td></tr>'. "\n");
-						}
+					$c = $count . ''; $add = '';
+					while (strlen($add) < strlen($c) - strlen($i . '')) {
+						$add .= '0';
 					}
 					
-					// write the file to every server
-					$filePath = $location['folder'] . $fileName;
-					$file = fopen($filePath, 'w');
-					
-					fwrite($file, '<?xml version="1.0" encoding="UTF-8"?>'. "\n");
-					fwrite($file, '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'. "\n");
-					fwrite($file, '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">'. "\n");
-					fwrite($file, '<head profile="http://selenium-ide.openqa.org/profiles/test-case">'. "\n");
-					fwrite($file, '	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />'. "\n");
-					fwrite($file, '	<link rel="selenium.base" href="http://' . $location['environment'] . '/" />'. "\n");
-					fwrite($file, '	<title>' . $conf['name'] . '</title>'. "\n");
-					fwrite($file, '</head>'. "\n");
-					fwrite($file, '<body>'. "\n");
-					fwrite($file, '	<table cellpadding="1" cellspacing="1" border="1">'. "\n");
-					fwrite($file, '		<thead>'. "\n");
-					fwrite($file, '			<tr><td rowspan="1" colspan="3">' .$conf['name'] . '</td></tr>'. "\n");
-					fwrite($file, '		</thead><tbody>'. "\n");
-					
-					for ($k = 0; $k < count($conf['blocks']); $k++) {
-						$block = $this->blocks[$conf['blocks'][$k]];
-						for($v = 0; $v < count($block); $v++) {
-							$line = $block[$v];
-							
-							if (array_key_exists('comment', $line)) { fwrite($file, "\n<!-- " . $line['comment'] . " -->"); }
-							fwrite($file, "\n<tr><td>" .$line['command'] . "</td><td>" .$line['target'] . "</td><td>" .$line['value'] . "</td></tr>");
+					for ($s = 0; $s < count($locations); $s++) {
+						
+						$location = $locations[$s];
+						
+						// write the file to every server
+						$filePath = $location['folder'] . $fileName;
+						$file = fopen($filePath, 'w');
+						
+						fwrite($file, '<?xml version="1.0" encoding="UTF-8"?>'. "\n");
+						fwrite($file, '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'. "\n");
+						fwrite($file, '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">'. "\n");
+						fwrite($file, '<head profile="http://selenium-ide.openqa.org/profiles/test-case">'. "\n");
+						fwrite($file, '	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />'. "\n");
+						fwrite($file, '	<link rel="selenium.base" href="http://' . $location['environment'] . '/" />'. "\n");
+						fwrite($file, '	<title>' . $conf['name'] . '</title>'. "\n");
+						fwrite($file, '</head>'. "\n");
+						fwrite($file, '<body>'. "\n");
+						fwrite($file, '	<table cellpadding="1" cellspacing="1" border="1">'. "\n");
+						fwrite($file, '		<thead>'. "\n");
+						fwrite($file, '			<tr><td rowspan="1" colspan="3">' .$conf['name'] . '</td></tr>'. "\n");
+						fwrite($file, '		</thead><tbody>'. "\n");
+						
+						for ($k = 0; $k < count($conf['blocks']); $k++) {
+							$block = $this->blocks[$conf['blocks'][$k]];
+							for($v = 0; $v < count($block); $v++) {
+								$line = $block[$v];
+								
+								if (array_key_exists('comment', $line)) { fwrite($file, "\n<!-- " . $line['comment'] . " -->"); }
+								fwrite($file, "\n<tr><td>" .$line['command'] . "</td><td>" .$line['target'] . "</td><td>" .$line['value'] . "</td></tr>");
+							}
 						}
-					}
-					
-					fwrite($file, '		</tbody></table></body></html>');
-					fclose($file);
-					
-					$line = "\n".'<tr><td><a href="' . $fileName . '">' . $add . $i . $conf['name'] . '</a></td></tr>';
-					fwrite($location['suiteFiles'][0]['fileHandler'], $line);
-					if (in_array($i, $this->smoketests)) {
-						fwrite($location['suiteFiles'][1]['fileHandler'], $line);
+						
+						fwrite($file, '		</tbody></table></body></html>');
+						fclose($file);
+						
+						$line = "\n".'<tr><td><a href="' . $fileName . '">' . $add . $i . $conf['name'] . '</a></td></tr>';
+						fwrite($location['suiteFiles'][0]['fileHandler'], $line);
+						if (in_array($i, $this->smoketests)) {
+							fwrite($location['suiteFiles'][1]['fileHandler'], $line);
+						}
 					}
 				}
 			}

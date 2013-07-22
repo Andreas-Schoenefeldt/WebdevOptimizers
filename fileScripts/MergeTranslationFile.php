@@ -44,7 +44,7 @@
 				'description' => 'If the Root Folder of the Project differ from the environments default, you can add this here.'
 			),
 		),
-		'A script to parse a IT project and incect new i18n keys into the appropriate resource files'
+		'A script to parse a IT project and incect new i18n keys into the appropriate resource files. The cells of the csv have to be seperated with , and you need the hadlines in the file: default, fr, es, de for example.'
 	);
 	
 	$fileToTranslate = $params->getFileName();
