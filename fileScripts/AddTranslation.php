@@ -115,7 +115,7 @@
 				$forcedSingleNodes = array_merge(
 					$htmlSingleNodes,
 					// isml single nodes
-					array('iselse' , 'isaddressform', 'isprint', 'isinclude', 'iscontentasset' , 'isinputfield', 'isbminputfield', 'ispaymentline', 'iselseif', 'isset', 'isbreak', 'isreplace', 'islineitemprice', 'isstatus', 'iscontent', 'isbreadcrumb', 'ismodule')
+					array('iselse' , 'isaddressform', 'isprint', 'isinclude', 'iscontentasset' , 'isinputfield', 'isbminputfield', 'ispaymentline', 'iselseif', 'isset', 'isbreak', 'isreplace', 'islineitemprice', 'isstatus', 'iscontent', 'isbreadcrumb', 'ismodule', 'isslot')
 				);
 				
 				$forcedOpenNodes = array('isif', 'isdecorate');

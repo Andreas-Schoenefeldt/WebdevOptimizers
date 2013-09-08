@@ -82,7 +82,7 @@
 		} 
 		
 		if (! file_exists($folder)) {
-			mkdir($folder);
+			mkdir($folder, 0777, true);
 		}
 		
 		if(! is_dir($folder)) {

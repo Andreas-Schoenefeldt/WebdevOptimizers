@@ -182,6 +182,7 @@ class ResourceFileHandler {
 					if ( ! (in_array('resources', $nsChunks) && in_array('templates', $nsChunks))) return false; // only take demandware resource files, that are located in a templates / resources folder
 					break;
 				case 'openCMS':
+					
 					break;
 			}
 			
@@ -482,6 +483,10 @@ class ResourceFileHandler {
 	}
 	
 	function getBestResourceKeyNamespace($key) {
+		
+		// d($this->keyMap);
+		// d($key);
+		
 		if (array_key_exists($key, $this->keyMap)) {
 			foreach ($this->keyMap[$key] as $namespace => $stats){
 				return $namespace;

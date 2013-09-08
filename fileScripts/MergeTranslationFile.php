@@ -26,7 +26,7 @@
 			'f' => array(
 				'name' => 'fileToMerge',
 				'datatype' => 'String',
-				'description' => 'The csv file to merge or to export, if the export parameter is given.',
+				'description' => 'The csv file to merge or to export, if the export parameter is given. If export all is given, there should be a export folder be defined at this place',
 				'required' => true
 			),
 			
@@ -34,6 +34,13 @@
 				'name' => 'export',
 				'datatype' => 'String',
 				'description' => 'add the properties file you want to export as csv',
+				'required' => false
+			),
+			
+			'xa' => array(
+				'name' => 'exportAll',
+				'datatype' => 'Boolean',
+				'description' => 'export all the propertie files as <resource namespace>.csv',
 				'required' => false
 			),
 			
@@ -62,7 +69,7 @@
 				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'cartridges';
 				break;
 			case 'openCMS':
-				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'modules';
+				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'modules'; // for now we just support the merge of one module
 				break;
 		}
 		
@@ -103,42 +110,47 @@
 			$resourceFileHandler->setPreferedPropertieLocations($config['prefered_propertie_locations']);
 		}
 		
-		if ($params->getVal('x')) {
+		if ($params->getVal('xa') || $params->getVal('x')) {
 			
-			$namespace = $params->getVal('x');
+			$namespaces = $params->getVal('xa') ? array_keys($resourceFileHandler->localisationMap) : array($params->getVal('x'));
+			for ($i = 0; $i < count($namespaces); $i++) {
+				
+				$namespace = $namespaces[$i];
+				$fileName = $params->getVal('xa') ? $params->getVal('f') . '/' . $namespace . '.csv' : $params->getVal('f');
 			
-			if (array_key_exists($namespace, $resourceFileHandler->localisationMap)) {
-				$io->out("> exporting namespace $namespace to file " . $params->getVal('f'));
-				$mergefile = fopen($params->getVal('f'), 'w');
-				$locals = $resourceFileHandler->getPreferedLocalisationMap($namespace);
-				
-				// write the header
-				$header = array('keys');
-				foreach ($locals as $locale => $stats) {
-					$header[] = $locale;
-				}
-				fputcsv($mergefile, $header);
-				
-				// write the file
-				
-				foreach ($locals['default']['keys'] as $key => $translation) {
-					$line = array($key);
+				if (array_key_exists($namespace, $resourceFileHandler->localisationMap)) {
+					$io->out("> exporting namespace $namespace to file " . $fileName);
+					$mergefile = fopen($fileName, 'w');
+					$locals = $resourceFileHandler->getPreferedLocalisationMap($namespace);
+					
+					// write the header
+					$header = array('keys');
 					foreach ($locals as $locale => $stats) {
-						switch($params->getVal('e')) {
-							default:
-								$line[] = array_key_exists($key, $locals[$locale]['keys']) ? $locals[$locale]['keys'][$key] : '';
-								break;
-							case 'openCMS':
-								$line[] = array_key_exists($key, $locals[$locale]['keys']) ? unicode_conv($locals[$locale]['keys'][$key]) : '';
-								break;
-						}
+						$header[] = $locale;
 					}
-					fputcsv($mergefile, $line);
+					fputcsv($mergefile, $header);
+					
+					// write the file
+					
+					foreach ($locals['default']['keys'] as $key => $translation) {
+						$line = array($key);
+						foreach ($locals as $locale => $stats) {
+							switch($params->getVal('e')) {
+								default:
+									$line[] = array_key_exists($key, $locals[$locale]['keys']) ? $locals[$locale]['keys'][$key] : '';
+									break;
+								case 'openCMS':
+									$line[] = array_key_exists($key, $locals[$locale]['keys']) ? unicode_conv($locals[$locale]['keys'][$key]) : '';
+									break;
+							}
+						}
+						fputcsv($mergefile, $line);
+					}
+					
+					fclose($mergefile);
+				} else {
+					$io->error("The namespace $namespace was not found among the paresed resource files.");
 				}
-				
-				fclose($mergefile);
-			} else {
-				$io->fatal("The namespace $namespace was not found among the paresed resource files.");
 			}
 			
 		} else {
@@ -168,22 +180,12 @@
 				$lineNumber++;
 				$key = trim($parts[0]);
 				for ($i = 1; $i < count($parts); $i++) {
-					/* // old file syntax
-					$keyVal = explode('=', $parts[$i], 2);
-					
-					if (trim($keyVal[0]) && count($keyVal) > 1) {
-						$mergeKeys[$indexes[$i]]['keys'][trim($keyVal[0])] = trim($keyVal[1]);
-					} else {
-						$io->error($parts[$i], 'line ' . $lineNumber . ' of the merge file');
-					}
-					
-					*/
 					$value = trim($parts[$i]);
 					
 					if ($key && $value) {
 						$mergeKeys[$indexes[$i]]['keys'][$key] = trim($value);
 					} else {
-						$io->error($line, 'line ' . $lineNumber . ' of the merge file');
+						$io->warn( $key . ' - no value for ' . $indexes[$i], 'line ' . $lineNumber);
 					}
 					
 				}
@@ -191,7 +193,6 @@
 			}
 			
 			fclose($mergefile);
-			
 			$resourceFileHandler->mergeKeyFileExtract($mergeKeys);
 			
 			if ($resourceFileHandler->printChangedResourceFiles(true)){	

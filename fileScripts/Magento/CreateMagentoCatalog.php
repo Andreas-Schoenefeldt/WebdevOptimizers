@@ -34,7 +34,7 @@
 				
 			),
 		),
-		'A Script to create a demandware content import xml file in order to create multilingual sitespecific content assets.'
+		'A Script to create a Magento Katalog and inventory Import file. Target of this script is a confog file.'
 	);
 	
 	$configFileName = $params->getFileName();
@@ -95,7 +95,6 @@
 			for ($i = 0; $i < count($data); $i++) {
 				$name = $headers[$i];
 				$value = $writer->parseInput($data[$i], $name);
-				
 				if (! is_array($value)) {
 					
 					switch ($name) {
@@ -305,6 +304,7 @@
 			
 			$file = fopen($inventoryDefinitionCSVFilePath, 'r');
 			$headers = fgetcsv($file); // get the header
+			
 			while (($data = fgetcsv($file)) !== FALSE) {
 				$line = array();
 				for ($i = 0; $i < count($data); $i++) {

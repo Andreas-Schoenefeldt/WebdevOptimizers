@@ -132,7 +132,7 @@ class FixedFieldFileWriter {
 	// Returns the actual computed, filled and alignes field value
 	function getFieldValue($val){
 					
-		if ($val === null) $val = $this->getFieldDefinitionValue('default');
+		if ($val === null || $val === '') $val = $this->getFieldDefinitionValue('default');
 		
 			
 		// preprocessing
@@ -158,6 +158,13 @@ class FixedFieldFileWriter {
 			case 'date':
 				$val = $val !== '' ? date($this->getFieldDefinitionValue('format'), intval($val)) : '';
 				break;
+			case 'enum':
+				$enumVals =  $this->getFieldDefinitionValue('enumValues');
+				if (array_key_exists($val, $enumVals)) {
+					$val = $enumVals[$val];
+				}
+				$val = $val.'';
+				break;
 		}
 		
 		
@@ -172,7 +179,6 @@ class FixedFieldFileWriter {
 	}
 	
 	function parseInput($val, $fieldId, $definitionName = 'default') {
-		
 		$this->currentDefinition = $this->fieldDefinitions[$definitionName]; // set the corresponding field
 		
 		if (array_key_exists($fieldId, $this->definitionLabelMapping[$definitionName])) {
@@ -191,11 +197,19 @@ class FixedFieldFileWriter {
 					break;
 				case 'date';
 					$val = str_replace(' ', '', $val); // clean the input
+					// d($val);
 					$val = $val ? date_create_from_format($this->getFieldDefinitionValue('input-format') ? $this->getFieldDefinitionValue('input-format') : $this->getFieldDefinitionValue('format'), $val)->getTimestamp() : null;
 					break;
 				case 'Boolean':
 					if (strtolower($val) == 'ja') $val = 1;
 					if (strtolower($val) == 'nein') $val = 0; 
+					break;
+				case 'enum':
+					
+					$enumVals = $this->getFieldDefinitionValue('enumValues');
+					if (array_key_exists($val, $enumVals)) {
+						$val = $enumVals[$val];
+					} 
 					break;
 			}
 		} else {
