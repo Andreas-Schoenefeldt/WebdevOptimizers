@@ -21,6 +21,10 @@ class GitWrapper extends CodeControlWrapper {
 		$this->execute('git pull');
 	}
 	
+	function version(){
+		$this->execute('git --version');
+	}
+	
 	function commit($message, $addAll, $files = array()){
 		$this->io->out("\n> Status of the commit:");		
 		// add will print a status afterwards

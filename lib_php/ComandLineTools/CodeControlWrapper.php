@@ -74,6 +74,10 @@ class CodeControlWrapper {
 		throw new Exception('Not Implemented');
 	}
 	
+	function version() {
+		throw new Exception('Not Implemented');
+	}
+	
 	function commit($message, $addAll, $files = array()){
 		if ($message) {
 			$this->addComment($message);

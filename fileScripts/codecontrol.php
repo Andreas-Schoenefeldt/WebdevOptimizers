@@ -24,6 +24,14 @@
 				'description' => 'Use this to define a certain branch, that should be used for the checkout.'
 			),
 			
+			'v' => array(
+				'name' => 'version',
+				'datatype' => 'Boolean',
+				'default' => false,
+				
+				'description' => 'Shows the version of the used repository system'
+			),
+			
 			'c' => array(
 				'name' => 'commit',
 				'datatype' => 'Boolean',
@@ -154,6 +162,9 @@
 		// status
 		} else if ($params->getVal('st')) {
 			$cc->status(false, $params->getVal('b')); // TODO Move the branch command out here
+		// version
+		} else if ($params->getVal('v')) {
+			$cc->version();
 		// log
 		} else if ($params->getVal('l')) {
 			$cc->log($params->getVal('l'));

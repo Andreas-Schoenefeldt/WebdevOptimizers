@@ -10,12 +10,17 @@ require_once(str_replace('//','/',dirname(__FILE__).'/') .'CodeControlWrapper.ph
 class SvnWrapper extends CodeControlWrapper {
 	
 	function update(){
+		$this->execute('svn cleanup');
 		return $this->execute('svn up');
 	}
 	
 	function status($short = false){
 		$command = 'svn st';
 		$this->execute($command);
+	}
+	
+	function version(){
+		$this->execute("svn --version");
 	}
 	
 	function commit($message, $addAll, $files = array()){
@@ -56,6 +61,14 @@ class SvnWrapper extends CodeControlWrapper {
 		$command = 'svn rm --force ' . implode(' ', $files);
 		$this->execute($command);
 		$this->status(true);
+	}
+	
+	function diff(){
+		$this->execute("svn diff");
+	}
+	
+	function log($args) {
+		$this->execute("svn log -v --limit 10");
 	}
 	
 }
