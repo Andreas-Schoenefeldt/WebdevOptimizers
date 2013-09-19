@@ -7,11 +7,170 @@ define("LOGFILE_ERROR",     "Logfile Error");
 class DemandwareLogAnalyser extends FileAnalyser {
 	
 	var $cartridgePath = array(); // the cartridgepath in order of inclusion
-	var $alertConfiguration = array();
+	
+	var $EXCEPTION_HANDLING_DEV_NAMESPACE = 'errorParsing';
+	var $NAMESPACE_ERROR = 'error';
+	var $NAMESPACE_CUSTOMERROR = 'customerror';
+	var $NAMESPACE_CUSTOMWARN = 'customwarn';
+	var $NAMESPACE_QUOTA = 'quota';
+	
+	var $errorExceptions = array();
+	var $customErrorExceptions = array();
 	
 	function __construct($file, $layout, $settings, $alertConfiguration)  {
-		$this->alertConfiguration = $alertConfiguration;
-		parent::__construct($file, 'demandware', $layout, $settings);
+		
+		parent::__construct($file, 'demandware', $layout, $settings, $alertConfiguration);
+		
+		// error handling
+		$this->errorExceptions = $this->mergeExceptionHandling(array(
+			array(
+				  'start' => 'SEOParsingException Unable to parse SEO url - no match found - {'
+				, 'type' => 'SEO URL mismatch'
+				, 'weight'	=> 1
+				, 'solve' => function($definition, $alyStatus){
+					
+					$urlPlusReferer = substr($alyStatus['entry'], strlen($definition['start']));
+					$parts = explode('} - Referer: ', $urlPlusReferer);
+					
+					if(count($parts) == 1)  $parts[0] = substr($parts[0], 0 , -2);
+					
+					$alyStatus['data']['urls'][$parts[0]] = true;
+					if(count($parts) > 1) $alyStatus['data']['referers'][$parts[1]] = true;
+					$alyStatus['entry'] = 'Unable to parse SEO url - no match found';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Invalid order status change from COMPLETED to OPEN for order '
+				, 'type' => 'Invalid order status change'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['orders']['#' . substr($alyStatus['entry'], strlen($definition['start']))] = true;
+					$alyStatus['entry'] = 'Invalid order status change from COMPLETED to OPEN';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Unexpected error: JDBC/SQL error: '
+				, 'type' => 'ORMSQLException'
+				, 'weight'	=> 9
+			),
+			
+			array(
+				  'start' => 'No start node'
+				, 'type' => 'No start node'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['pipelines'][substr($alyStatus['entry'], 38, -7)] = true; // getting the pipeline
+					$alyStatus['entry'] = 'No start node specified for pipeline call.';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Customer password could not be updated.'
+				, 'type' => 'Invalid Customer password update'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['passwords'][substr($alyStatus['entry'], 80, -1)] = true;
+					$alyStatus['entry'] = substr($alyStatus['entry'], 0, 78);
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Maximum number of sku(s) exceeds limit'
+				, 'type' => 'Maximum limit exceed'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['limits'][substr($alyStatus['entry'], 39)] = true;
+					$alyStatus['entry'] = 'Maximum number of sku(s) exceeds limit.';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Java constructor for'
+				, 'type' => 'Java constructor'
+				, 'weight'	=> 3
+			),
+						
+			array(
+				  'start' => 'The basket is null'
+				, 'type' => 'Missing Basket'
+				, 'weight' => 1
+			),
+			
+			array(
+				  'start' => 'Invalid order status change from COMPLETED to CANCELLED for order '
+				, 'type' => 'Invalid order status change'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['data']['orders']['#' . substr($alyStatus['entry'], strlen($definition['start']))] = true;
+					$alyStatus['entry'] = 'Invalid order status change from COMPLETED to CANCELLED';
+					return $alyStatus;
+				}
+			),
+		), $this->NAMESPACE_ERROR);
+		
+		
+		// custom error handling and custom warn handling
+		$this->customErrorExceptions = $this->mergeExceptionHandling(array(
+			array(
+				  'start' => 'Error executing script'
+				, 'type' => 'Error executing script'
+				, 'weight'	=> 1
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['entry'] = substr($alyStatus['entry'], 23);
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Timeout while executing script'
+				, 'type' => 'Script execution timeout'
+				, 'weight' => 1
+				, 'solve' => function($definition, $alyStatus){
+					$alyStatus['entry'] = substr($alyStatus['entry'], 23);
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Unknown category ID'
+				, 'type' => 'Unknown category ID'
+				, 'weight' => 1
+				, 'solve' => function($definition, $alyStatus){
+					$entry = explode('Unknown category ID ', $alyStatus['entry'], 2);
+					$entry = explode(' for implicit search filters given.', $entry[1], 2);
+					$alyStatus['data']['Category IDs'][trim($entry[0])] = true;
+					$alyStatus['entry'] = 'Unknown category ID for implicit search filters given.';
+					return $alyStatus;
+				}
+			),
+			
+			array(
+				  'start' => 'Timeout while executing script'
+				, 'type' => 'Script execution timeout'
+				, 'weight' => 1
+			)
+			
+		), $this->NAMESPACE_CUSTOMERROR);
+		$this->customErrorExceptions = $this->mergeExceptionHandling($this->customErrorExceptions, $this->NAMESPACE_CUSTOMWARN); // both namespaces are handled by one function, so we also combine both error files
+		
+		// quota handling (was not necessary so far)
+	}
+	
+	function mergeExceptionHandling($target, $namespace){
+		if (array_key_exists($this->EXCEPTION_HANDLING_DEV_NAMESPACE, $this->alertConfiguration)){
+			if (array_key_exists($namespace, $this->alertConfiguration[$this->EXCEPTION_HANDLING_DEV_NAMESPACE])){
+				return array_merge($target, $this->alertConfiguration[$this->EXCEPTION_HANDLING_DEV_NAMESPACE][$namespace]);
+			}
+		}
+		
+		return $target;
 	}
 	
 	function analyse($fileIdent){
@@ -266,7 +425,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				if ($errorLineLayout == 'extended') $this->alyStatus['data']['sites'][$this->extractSiteID(trim($messageParts[2]))] = true;
 				
-				$errorsWithAdditionalLineToParse = array('Error executing script', 'Script execution timeout');
+				$errorsWithAdditionalLineToParse = array('Error executing script', 'Script execution timeout', 'AbstractBaseService.ds');
 				
 				if (in_array($this->alyStatus['errorType'], $errorsWithAdditionalLineToParse) || $parseSecondLine) {
 					$newLine = $this->getNextLineOfCurrentFile($this->alyStatus);
@@ -598,105 +757,12 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			)
 		);
 		
-		$errorExceptions = array(
-			array(
-				  'start' => 'SEOParsingException Unable to parse SEO url - no match found - {'
-				, 'type' => 'SEO URL mismatch'
-				, 'weight'	=> 1
-				, 'solve' => function($definition, $alyStatus){
-					
-					$urlPlusReferer = substr($alyStatus['entry'], strlen($definition['start']));
-					$parts = explode('} - Referer: ', $urlPlusReferer);
-					
-					if(count($parts) == 1)  $parts[0] = substr($parts[0], 0 , -2);
-					
-					$alyStatus['data']['urls'][$parts[0]] = true;
-					if(count($parts) > 1) $alyStatus['data']['referers'][$parts[1]] = true;
-					$alyStatus['entry'] = 'Unable to parse SEO url - no match found';
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Invalid order status change from COMPLETED to OPEN for order '
-				, 'type' => 'Invalid order status change'
-				, 'weight'	=> 0
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['data']['orders']['#' . substr($alyStatus['entry'], strlen($definition['start']))] = true;
-					$alyStatus['entry'] = 'Invalid order status change from COMPLETED to OPEN';
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Unexpected error: JDBC/SQL error: '
-				, 'type' => 'ORMSQLException'
-				, 'weight'	=> 9
-			),
-			
-			array(
-				  'start' => 'No start node'
-				, 'type' => 'No start node'
-				, 'weight'	=> 0
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['data']['pipelines'][substr($alyStatus['entry'], 38, -7)] = true; // getting the pipeline
-					$alyStatus['entry'] = 'No start node specified for pipeline call.';
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Customer password could not be updated.'
-				, 'type' => 'Invalid Customer password update'
-				, 'weight'	=> 0
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['data']['passwords'][substr($alyStatus['entry'], 80, -1)] = true;
-					$alyStatus['entry'] = substr($alyStatus['entry'], 0, 78);
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Maximum number of sku(s) exceeds limit'
-				, 'type' => 'Maximum limit exceed'
-				, 'weight'	=> 0
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['data']['limits'][substr($alyStatus['entry'], 39)] = true;
-					$alyStatus['entry'] = 'Maximum number of sku(s) exceeds limit.';
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Java constructor for'
-				, 'type' => 'Java constructor'
-				, 'weight'	=> 3
-			),
-						
-			array(
-				  'start' => 'The basket is null'
-				, 'type' => 'Missing Basket'
-				, 'weight' => 1
-			),
-			
-			array(
-				  'start' => 'Invalid order status change from COMPLETED to CANCELLED for order '
-				, 'type' => 'Invalid order status change'
-				, 'weight'	=> 0
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['data']['orders']['#' . substr($alyStatus['entry'], strlen($definition['start']))] = true;
-					$alyStatus['entry'] = 'Invalid order status change from COMPLETED to CANCELLED';
-					return $alyStatus;
-				}
-			),
-		);
-		
 		$continue = true;
 		
-		for ($i = 0; $i < count($errorExceptions); $i++) {
-			if (startsWith($this->alyStatus['entry'], $errorExceptions[$i]['start'])) {
-				$this->alyStatus['errorType'] = $errorExceptions[$i]['type'];
-				if (array_key_exists('solve', $errorExceptions[$i])) $this->alyStatus = $errorExceptions[$i]['solve']($errorExceptions[$i], $this->alyStatus);
+		for ($i = 0; $i < count($this->errorExceptions); $i++) {
+			if (startsWith($this->alyStatus['entry'], $this->errorExceptions[$i]['start'])) {
+				$this->alyStatus['errorType'] = $this->errorExceptions[$i]['type'];
+				if (array_key_exists('solve', $this->errorExceptions[$i])) $this->alyStatus = $this->errorExceptions[$i]['solve']($this->errorExceptions[$i], $this->alyStatus);
 				$continue = false;
 				break;
 			}
@@ -727,54 +793,12 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	
 	function extractMeaningfullCustomData(){
 		
-		$errorExceptions = array(
-			array(
-				  'start' => 'Error executing script'
-				, 'type' => 'Error executing script'
-				, 'weight'	=> 1
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['entry'] = substr($alyStatus['entry'], 23);
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Timeout while executing script'
-				, 'type' => 'Script execution timeout'
-				, 'weight' => 1
-				, 'solve' => function($definition, $alyStatus){
-					$alyStatus['entry'] = substr($alyStatus['entry'], 23);
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Unknown category ID'
-				, 'type' => 'Unknown category ID'
-				, 'weight' => 1
-				, 'solve' => function($definition, $alyStatus){
-					$entry = explode('Unknown category ID ', $alyStatus['entry'], 2);
-					$entry = explode(' for implicit search filters given.', $entry[1], 2);
-					$alyStatus['data']['Category IDs'][trim($entry[0])] = true;
-					$alyStatus['entry'] = 'Unknown category ID for implicit search filters given.';
-					return $alyStatus;
-				}
-			),
-			
-			array(
-				  'start' => 'Timeout while executing script'
-				, 'type' => 'Script execution timeout'
-				, 'weight' => 1
-			)
-			
-		);
-		
 		$continue = true;
 		
-		for ($i = 0; $i < count($errorExceptions); $i++) {
-			if (startsWith($this->alyStatus['entry'], $errorExceptions[$i]['start'])) {
-				$this->alyStatus['errorType'] = $errorExceptions[$i]['type'];
-				if (array_key_exists('solve', $errorExceptions[$i])) $this->alyStatus = $errorExceptions[$i]['solve']($errorExceptions[$i], $this->alyStatus);
+		for ($i = 0; $i < count($this->customErrorExceptions); $i++) {
+			if (startsWith($this->alyStatus['entry'], $this->customErrorExceptions[$i]['start'])) {
+				$this->alyStatus['errorType'] = $this->customErrorExceptions[$i]['type'];
+				if (array_key_exists('solve', $this->customErrorExceptions[$i])) $this->alyStatus = $this->customErrorExceptions[$i]['solve']($this->customErrorExceptions[$i], $this->alyStatus);
 				$continue = false;
 				break;
 			}

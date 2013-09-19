@@ -31,12 +31,14 @@ class FileAnalyser {
 	var $alertMails = array();
 	
 	var $resultFileName = '';
+	var $alertConfiguration = array();
 
-	function __construct($files, $environment, $layout, $settings)  {
+	function __construct($files, $environment, $layout, $settings, $alertConfiguration = array())  {
 		$this->io = new CmdIO();
 		$this->files = $files;
 		$this->environment = $environment;
 		$this->layout = $layout;
+		$this->alertConfiguration = $alertConfiguration;
 		
 		// calculate the timeframes
 		$this->settings['from_human'] = $settings['from'];
@@ -45,24 +47,6 @@ class FileAnalyser {
 		$this->settings['timestamp'] = $settings['timestamp'];
 		$this->settings['from'] = $settings['timestamp'] + $this->getSecondsFromHoure($settings['from']);
 		$this->settings['to'] = $settings['timestamp'] + $this->getSecondsFromHoure($settings['to']);
-		
-		// get the file
-		for ($i = 0; $i < count($this->files); $i++) {
-			
-			$filename = $this->files[$i]; 
-			if (file_exists($filename)){
-				$this->currentFile = $filename;
-				$this->filePointer = fopen($filename, 'r');
-				
-				// analyse the file
-				$this->analyse($i);
-				
-				fclose($this->filePointer);
-				
-			} else {
-				$this->io->error("File $filename does not exist");
-			}	
-		}
 	}
 	
 	function setResultFileName($name){ $this->resultFileName = $name; }
@@ -91,6 +75,29 @@ class FileAnalyser {
 		}
 		
 		$this->workingDir = $dir;
+	}
+	
+	/**
+	 *	Main Function, which will start the actual analysation process
+	 */
+	function parse(){
+		// get the file
+		for ($i = 0; $i < count($this->files); $i++) {
+			
+			$filename = $this->files[$i]; 
+			if (file_exists($filename)){
+				$this->currentFile = $filename;
+				$this->filePointer = fopen($filename, 'r');
+				
+				// analyse the file
+				$this->analyse($i);
+				
+				fclose($this->filePointer);
+				
+			} else {
+				$this->io->error("File $filename does not exist");
+			}	
+		}
 	}
 	
 	/**
