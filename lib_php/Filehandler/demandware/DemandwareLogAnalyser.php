@@ -630,6 +630,21 @@ class DemandwareLogAnalyser extends FileAnalyser {
 						
 						break;
 					
+					case 'ISH-CORE-2688':
+						$parts = explode(' , ',$this->alyStatus['entry']);
+						
+						if (startsWith($parts[0], 'Uncaught exception in Job Thread')) {
+							
+							preg_match('/, ID=(?P<id>.*?),.*?description=(?P<description>.*?),.*?pipelineName=(?P<pipeline>.*?),.*?startNodeName=(?P<node>.*?),/', $parts[1], $treffer);
+							if($treffer['id']) $this->alyStatus['data']['Job ID'][$treffer['id']] = true;
+							if($treffer['description']) $this->alyStatus['data']['Job Description'][$treffer['description']] = true;
+							if($treffer['pipeline']) $this->alyStatus['data']['Startnode'][$treffer['pipeline'] . '-' . $treffer['node']] = true;
+							
+							$parts = explode(' [', $parts[1]);
+							$parts = explode(' ', $parts[0], 2);
+							$this->alyStatus['entry'] = $parts[1];
+						}
+						break;
 					// internal errors
 					case 'ISH-CORE-2482':
 						break;
