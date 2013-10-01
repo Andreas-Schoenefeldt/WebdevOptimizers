@@ -196,9 +196,20 @@ class FixedFieldFileWriter {
 					}
 					break;
 				case 'date';
-					$val = str_replace(' ', '', $val); // clean the input
-					// d($val);
-					$val = $val ? date_create_from_format($this->getFieldDefinitionValue('input-format') ? $this->getFieldDefinitionValue('input-format') : $this->getFieldDefinitionValue('format'), $val)->getTimestamp() : null;
+					$val = trim(str_replace(' ', '', $val)); // clean the input
+					
+					if ($val) {
+						$format = $this->getFieldDefinitionValue('input-format') ? $this->getFieldDefinitionValue('input-format') : $this->getFieldDefinitionValue('format');
+						$date = date_create_from_format($format, $val);
+						if ($date) {
+							$val = $date->getTimestamp();
+						} else {
+							$val = null;
+							$this->io->error('Could not parse ' . $fieldId . ' with value ' . $val . ' to the format ' . $format . '.');
+						}
+					} else {
+						$val = null;
+					}
 					break;
 				case 'Boolean':
 					if (strtolower($val) == 'ja') $val = 1;

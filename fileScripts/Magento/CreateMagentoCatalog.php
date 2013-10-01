@@ -67,11 +67,11 @@
 		$inventory = array();
 		$inventoryExportFile = $params->getVal('xi') ? $params->getVal('xi') : $outputInventoryFilePath;
 		if ($inventoryExportFile) {
-			$invenotryWriter = new FixedFieldFileWriter($inventoryMappingConfig, $inventoryExportFile);
-			$invenotryWriter->printHeader();
+			$inventoryWriter = new FixedFieldFileWriter($inventoryMappingConfig, $inventoryExportFile);
+			$inventoryWriter->printHeader();
 			
 			// read the inventory
-			$inventory = read_inventory($inventoryDefinitionPath, $invenotryWriter);
+			$inventory = read_inventory($inventoryDefinitionPath, $inventoryWriter);
 		} else {
 			$io->error("You are missing the inventory output file definiton. Inventory will be ignored.");
 		}
@@ -192,17 +192,16 @@
 				
 				if ($inventoryExportFile) {
 					$inventoryLine[$skuFieldName] = $configProdLine[$skuFieldName];
-					$invenotryWriter->printLine($line);
+					$inventoryWriter->printLine($line);
 				}
 				
 			} else {
 				
 				$configProdArrayValues['_super_attribute_price_corr'] = array();
+				$allProductsOutOfStock = true;
 				
 				// writing the simple products for the configurable products
 				for ($i = 0; $i < count($configurableProductIdentifyerArr); $i++) {
-					
-					$allProductsOutOfStock = true;
 					$line['Kategorie'] = ''; // we are removing the Kategorie for this products, because only the configurable one should show up in the Kategory Sort area
 					$line[$skuFieldName] = $configProdLine[$skuFieldName] . '-' . $configurableProductIdentifyerArr[$i];
 					$line[$configurable_product_attr['name']] = $configurableProductIdentifyerArr[$i];
@@ -225,7 +224,7 @@
 					$productCounter++;
 					if ($inventoryExportFile) {
 						$inventoryLine[$skuFieldName] = $line[$skuFieldName];
-						$invenotryWriter->printLine($line);
+						$inventoryWriter->printLine($line);
 					}
 				}
 				
@@ -234,7 +233,11 @@
 				$configProdLine['has_options'] = 1;
 				$configProdLine['required_options'] = 1;
 				$configProdLine['visibility'] = 4;
-				if (! $allProductsOutOfStock) $configProdLine[$in_stock_definition_attr['name']] = 1;
+				if (! $allProductsOutOfStock) {
+					$configProdLine[$in_stock_definition_attr['name']] = 1;
+				} else {
+					$io->warn('the Product ' . $configProdLine[$skuFieldName] . ' is out of Stock.', 'Inventory Check');
+				}
 				$configProdLine['qty'] = 0;
 				
 				// setting up the images
@@ -250,10 +253,13 @@
 					if(count($values) > 0) $configProdLine[$name] = $values[0];
 				}
 				
+				
+				// writing an inventory line for the product, in order to avoid that it is completly out of stock
+				$inventoryWriter->printLine($configProdLine);
+				
 				// writing the configurable product
 				$writer->printLine($configProdLine);
 				$productCounter++;
-				
 			}
 			
 			// we print the option lines for all products, that have it
@@ -283,7 +289,7 @@
 		
 		$writer->close();
 		if ($inventoryExportFile) {
-			$invenotryWriter->close();
+			$inventoryWriter->close();
 		}
 		
 		
@@ -293,8 +299,8 @@
 	
 	
 	// a function in order to get a inventory. returns an array with SKU => Inventory
-	// @param FixexFieldFileWriter $invenotryWriter - The writer for parsing the values
-	function read_inventory($inventoryDefinitionCSVFilePath, $invenotryWriter) {
+	// @param FixexFieldFileWriter $inventoryWriter - The writer for parsing the values
+	function read_inventory($inventoryDefinitionCSVFilePath, $inventoryWriter) {
 		global $io;
 		$inventory = array();
 		if (! file_exists($inventoryDefinitionCSVFilePath)) {
@@ -309,7 +315,7 @@
 				$line = array();
 				for ($i = 0; $i < count($data); $i++) {
 					$name = $headers[$i];
-					$value = $invenotryWriter->parseInput($data[$i], $name);
+					$value = $inventoryWriter->parseInput($data[$i], $name);
 					
 					$line[$name] = $value;
 				}
@@ -321,17 +327,18 @@
 		return $inventory;
 	}
 	
-	// this function will applay all the Magento transition, which is also done by the image upload
+	// this function will apply all the Magento transition, which is also done by the image upload
 	function generateAndMoveToMagentoImagePath($image_src_path, $image_target_path, $image_name) {
 		global $io;
 		$functionName = 'IMAGE VERIFY';
+		$overridePath = $image_target_path . '/update/';
 		
 		// first check the requirements
 		if (! is_dir($image_target_path) ) $io->fatal('the variable $image_target_path must hold a valid folder, currently: ' . $image_target_path, $functionName );
 		if ( ! ( is_dir($image_src_path) && file_exists($image_src_path)) ) $io->fatal('Something is wrong with the $image_src_path definition. Does this folder exist? ' . $image_target_path, $functionName );
 		
 		if (! $image_name) {
-			$io->error('The function generateAndMoveToMagentoImagePath must be called with an image file');
+			$io->error('No image name given for copy.');
 			return null;
 		}
 		
@@ -389,7 +396,27 @@
 		$image_target_path .= $magento_image_name;
 		
 		// coppy the image if not already there
-		if (! file_exists($image_target_path)) copy($targetFile, $image_target_path) or $io->fatal('The image vould not be coppyed ' . $image_target_path, $functionName );
+		if (! file_exists($image_target_path)) {
+			copy($targetFile, $image_target_path) or $io->fatal('The image could not be coppyed ' . $image_target_path, $functionName );
+		} else {
+			// check, if the new image is actually newer, then the current image
+			if(filemtime($image_target_path) < filemtime($targetFile)){
+				
+				$io->warn('The image ' . $image_name . ' is newer then the existing one. Copyed also to the update folder.', $functionName);
+				
+				if (! file_exists($overridePath))  {
+					$io->out('> Creating the update target folder ' . $overridePath);
+					mkdir($overridePath);
+				}
+				
+				copy($targetFile, $image_target_path) or $io->fatal('The image could not be coppyed ' . $image_target_path, $functionName );
+				$image_target_path = $overridePath . $magento_image_name;
+				copy($targetFile, $image_target_path) or $io->fatal('The image could not be coppyed ' . $image_target_path, $functionName );
+				
+				
+			}
+			
+		}
 		
 		return $internal_magento_image_path;
 		
