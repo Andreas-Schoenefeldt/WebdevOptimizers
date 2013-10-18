@@ -636,9 +636,14 @@ class DemandwareLogAnalyser extends FileAnalyser {
 						if (startsWith($parts[0], 'Uncaught exception in Job Thread')) {
 							
 							preg_match('/, ID=(?P<id>.*?),.*?description=(?P<description>.*?),.*?pipelineName=(?P<pipeline>.*?),.*?startNodeName=(?P<node>.*?),/', $parts[1], $treffer);
-							if($treffer['id']) $this->alyStatus['data']['Job ID'][$treffer['id']] = true;
-							if($treffer['description']) $this->alyStatus['data']['Job Description'][$treffer['description']] = true;
-							if($treffer['pipeline']) $this->alyStatus['data']['Startnode'][$treffer['pipeline'] . '-' . $treffer['node']] = true;
+							
+							if(count($treffer)) {
+							
+								if( array_key_exists('id', $treffer) ) $this->alyStatus['data']['Job ID'][$treffer['id']] = true;
+								if( array_key_exists('description', $treffer) ) $this->alyStatus['data']['Job Description'][$treffer['description']] = true;
+								if( array_key_exists('pipeline', $treffer) ) $this->alyStatus['data']['Startnode'][$treffer['pipeline'] . '-' . $treffer['node']] = true;
+							
+							}
 							
 							$parts = explode(' [', $parts[1]);
 							$parts = explode(' ', $parts[0], 2);

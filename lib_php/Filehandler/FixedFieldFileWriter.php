@@ -187,6 +187,7 @@ class FixedFieldFileWriter {
 			
 			switch ($this->getFieldDefinitionValue('datatype')) {
 				default:	
+					$val = trim($val);
 					break;
 				case 'mg-csv-def';
 					$vals = explode(',', $val);

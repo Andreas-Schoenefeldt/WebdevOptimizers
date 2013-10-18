@@ -14,9 +14,9 @@
 			'i' => array(
 				'name' => 'input',
 				'datatype' => 'String',
-				'required' => true,
+				'required' => false,
 				
-				'description' => 'the human readable input csv'
+				'description' => 'the human readable Catalog input csv'
 			),
 			'o' => array(
 				'name' => 'output',
@@ -53,7 +53,7 @@
 			$io->fatal('The given config file is empty or invalid: ' . $configFileName, 'CreateMagentoCatalog');
 		}
 		
-		$inputFilePath = $params->getVal('i');
+		$inputFilePath = $params->getVal('i') ? $params->getVal('i') : $catalogDefinitionPath;
 		if (! file_exists($inputFilePath)) {
 			$io->fatal("The given input file " . $inputFilePath . 'does not exist.');
 		}
@@ -85,6 +85,7 @@
 		
 		$lineCounter = 0;
 		$productCounter = 0;
+		$category_positions = array();
 		while (($data = fgetcsv($input)) !== FALSE) {
 			$lineCounter++;
 			
@@ -109,6 +110,14 @@
 							if (strlen($value) > 170) {
 								$value = substr($value, 0, 170) . '...';
 								$io->warn("Short description is too long. Cutted at char 170.", "Line: " . $lineCounter);
+							}
+							break;
+						case $category_attr['name']:
+							// fill the counters
+							if(array_key_exists($value, $category_positions)) {
+								$category_positions[$value]++;
+							} else {
+								$category_positions[$value] = 1;
 							}
 							break;
 					} 					
@@ -156,20 +165,12 @@
 			if (count($configurableProductIdentifyerArr) < 2 ) {
 				$line[$skuFieldName] = $configProdLine[$skuFieldName] ;
 				$line[$configurable_product_attr['name']] = $configurableProductIdentifyerArr[0];
+				$line[$category_position_attr['name']] = $category_positions[$line[$category_attr['name']]];
 				$line['visibility'] = 4;
 				
-				// setting the inventory
-				if (array_key_exists($line[$skuFieldName], $inventory)) {
-					$line[$inventory_definition_attr['name']] = $inventory[$line[$skuFieldName]]['qty'];
-					if ($inventory[$line[$skuFieldName]]['qty'] > 0) {
-						$line[$in_stock_definition_attr['name']] = 1;
-					} else {
-						$line[$in_stock_definition_attr['name']] = 0;
-					}
-				}
+				$line = set_inventory_for_line($line, $inventory);
 				
 				// setting up the images
-				// TODO: What about more the one image?
 				if (array_key_exists($image_definition_attr['name'], $configProdArrayValues) && count($configProdArrayValues[$image_definition_attr['name']]) > 0) {
 					$line[$image_definition_attr['name']] = $configProdArrayValues[$image_definition_attr['name']][0];
 					$line['_media_position'] = 1;
@@ -196,29 +197,22 @@
 				}
 				
 			} else {
+				// this product is a configurable one
 				
 				$configProdArrayValues['_super_attribute_price_corr'] = array();
 				$allProductsOutOfStock = true;
 				
 				// writing the simple products for the configurable products
 				for ($i = 0; $i < count($configurableProductIdentifyerArr); $i++) {
-					$line['Kategorie'] = ''; // we are removing the Kategorie for this products, because only the configurable one should show up in the Kategory Sort area
+					$line[$category_attr['name']] = ''; // we are removing the Kategorie for this products, because only the configurable one should show up in the Kategory Sort area
 					$line[$skuFieldName] = $configProdLine[$skuFieldName] . '-' . $configurableProductIdentifyerArr[$i];
 					$line[$configurable_product_attr['name']] = $configurableProductIdentifyerArr[$i];
 					
 					$configProdArrayValues['_super_products_sku'][] = $line[$skuFieldName];
 					
-					// setting the inventory
-					if (array_key_exists($line[$skuFieldName], $inventory)) {
-						$line[$inventory_definition_attr['name']] = $inventory[$line[$skuFieldName]]['qty'];
-						$configProdArrayValues['_super_attribute_price_corr'][] = $inventory[$line[$skuFieldName]]['price_correction'];
-						if ($inventory[$line[$skuFieldName]]['qty'] > 0) {
-							$allProductsOutOfStock = false;
-							$line[$in_stock_definition_attr['name']] = 1;
-						} else {
-							$line[$in_stock_definition_attr['name']] = 0;
-						}
-					}
+					$line = set_inventory_for_line($line, $inventory);
+					
+					if($line[$in_stock_definition_attr['name']] == 1) $allProductsOutOfStock = false; 
 					
 					$writer->printLine($line);
 					$productCounter++;
@@ -233,12 +227,15 @@
 				$configProdLine['has_options'] = 1;
 				$configProdLine['required_options'] = 1;
 				$configProdLine['visibility'] = 4;
+				$configProdLine['qty'] = 0;
+				$configProdLine[$category_position_attr['name']] = $category_positions[$configProdLine[$category_attr['name']]];
+				
 				if (! $allProductsOutOfStock) {
 					$configProdLine[$in_stock_definition_attr['name']] = 1;
 				} else {
-					$io->warn('the Product ' . $configProdLine[$skuFieldName] . ' is out of Stock.', 'Inventory Check');
+					$io->warn('the Product ' . $configProdLine[$skuFieldName] . ' is out of Stock because all variants are out of Stock.', 'Inventory Check');
 				}
-				$configProdLine['qty'] = 0;
+				
 				
 				// setting up the images
 				if (array_key_exists($image_definition_attr['name'], $configProdArrayValues) && count($configProdArrayValues[$image_definition_attr['name']]) > 0) {
@@ -296,6 +293,44 @@
 	}
 	
 	// ----- Functions ------------------------------------
+	
+	
+	function set_inventory_for_line($line, $inventory) {
+		global $io, $inventory_definition_attr, $skuFieldName, $configurable_product_attr, $in_stock_definition_attr;
+		$delim = '-';
+		
+		$fallback_inventory_id = strpos($line[$skuFieldName], $delim) > -1 ? substr($line[$skuFieldName], 0, strpos($line[$skuFieldName], $delim)) : $line[$skuFieldName] . $delim  . $line[$configurable_product_attr['name']];
+		$checkIds = array($line[$skuFieldName], $fallback_inventory_id);
+		
+		$foundLine = false;
+		
+		$line[$in_stock_definition_attr['name']] = 0;
+		
+		for ($i = 0; $i < count($checkIds); $i++) {
+			
+			if (array_key_exists($checkIds[$i], $inventory)) {
+				
+				if ( $i > 0 )  $io->warn('Added inventory on using fallback id ' . $checkIds[$i]  , 'Inventory Check');
+				
+				$foundLine = true;
+				$line[$inventory_definition_attr['name']] = $inventory[$checkIds[$i]]['qty'];
+				if ($inventory[$checkIds[$i]]['qty'] > 0) {
+					$line[$in_stock_definition_attr['name']] = 1;
+				} else {
+					$io->warn('the Product ' . $line[$skuFieldName] . ' is out of Stock.', 'Inventory Check');
+					$line[$in_stock_definition_attr['name']] = 0;
+				}
+				
+				break; // we return on the first found entry, no further checks needed
+			}
+		}
+		
+		if (! $foundLine) {
+			$io->error('No inventory ID given for ' . join(' or ', $checkIds)  , 'Inventory Check');
+		}
+		
+		return $line;
+	}
 	
 	
 	// a function in order to get a inventory. returns an array with SKU => Inventory
