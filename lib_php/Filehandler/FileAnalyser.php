@@ -115,7 +115,6 @@ class FileAnalyser {
 	function getNextLineOfCurrentFile(){
 		$this->alyStatus['lineNumber']++;
 		$line = fgets($this->filePointer, 4096);
-		$this->alyStatus['stacktrace'] .= $line;
 		
 		$trimmedLine = trim($line);
 		return ($line && !$trimmedLine) ? true : $trimmedLine;

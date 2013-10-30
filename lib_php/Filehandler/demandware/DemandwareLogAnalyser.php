@@ -184,34 +184,34 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			$this->alertMails[$this->layout." logfile threshold exceeded"] = $alertMail;
 		}
 		
-		while ($line = $this->getNextLineOfCurrentFile()) {
-			
-			// d('OW: ' . $line);
-			
-			while ($line) {
-				$line = $this->analyseLine($line);
-				
-				//d('IW: ' . $line);
-				
-				if ($this->alyStatus['add']) {	
-					/*
-					d($this->alyStatus);
-					$this->io->read('Add error from line ' . $this->alyStatus['entryNumber'] . ': ' .  $this->alyStatus['errorType']);
-					*/
-					
-					$errorCount = $this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
-					
-					$alertMail = $this->checkAlert($errorCount, $this->alyStatus['stacktrace']);
-					
-					if (!empty($alertMail)) {
-						$this->alertMails[$this->alyStatus['entry']] = $alertMail;
-					}
-					
+		$firstError = true;
+		
+		while ($line = $this->getNextLineOfCurrentFile()) {	
+			if($this->startsWithTimestamp($line)) {
+				if (! $firstError) {
+					$this->addError($fileIdent, $line);
+				} else {
 					$this->initAlyStatus($fileIdent, $this->alyStatus['lineNumber'], $line);
+					$firstError = false;
 				}
+			} else {
+				$this->alyStatus['stacktrace'] .= $line . "\n";
 			}
+			
+			$line = $this->analyseLine($line);
+		}
+		$this->addError($fileIdent, '');
+	}
+	
+	function addError($fileIdent, $line){
+		$errorCount = $this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
+		$alertMail = $this->checkAlert($errorCount, $this->alyStatus['stacktrace']);
+		
+		if (!empty($alertMail)) {
+			$this->alertMails[$this->alyStatus['entry']] = $alertMail;
 		}
 		
+		$this->initAlyStatus($fileIdent, $this->alyStatus['lineNumber'], $line);
 	}
 	
 	// analyse a single line
@@ -251,12 +251,12 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	
 	function analyse_quota_line($line) {
 		if ($this->alyStatus['enter']) { // every line is a error
-			
+			$this->alyStatus['enter'] = false;
 			$this->alyStatus['entryNumber'] = $this->alyStatus['lineNumber'];
 			$this->alyStatus['data'] = array('sites' => array(), 'dates' => array(), 'GMT timestamps' => array(), 'max actual' => array(), 'pipeline' => array());
 			$this->alyStatus['add'] = true;
 			
-			if (substr($line, 0, 1) == '[' && substr($line, 25, 4) == 'GMT]') {
+			if ($this->startsWithTimestamp($line)) {
 				$errorLineLayout = 'extended';
 				$parts = explode(']', substr($line, 29), 2);
 				$this->alyStatus['data']['dates'][substr($line, 1, 10)] = true;
@@ -289,6 +289,8 @@ class DemandwareLogAnalyser extends FileAnalyser {
 					d($this->alyStatus['entry']);
 				}
 				
+				// d($this->alyStatus['errorType']);
+				
 				switch($this->alyStatus['errorType']){
 					default:
 						
@@ -314,6 +316,15 @@ class DemandwareLogAnalyser extends FileAnalyser {
 						}
 						
 						break;
+					case 'api.dw.catalog.Category.getOnlineProducts()@SF (internal, limit 0)':
+						$this->alyStatus['entry'] = "getOnlineProducts Quota";
+						break;
+					case 'api.dw.catalog.Category.getOnlineSubCategories()@SF (internal, limit 0)':
+						$this->alyStatus['entry'] = "getOnlineSubCategories Quota";
+						break;
+					case 'api.queryObjects@JOB (internal, limit 0)':
+						$this->alyStatus['entry'] = "queryObjects Quota";
+						break;
 				}
 				
 			} else {
@@ -329,14 +340,14 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	function analyse_customerror_line($line) {
 		
 		if ($this->alyStatus['enter']) { // every line is a error
-			
+			$this->alyStatus['enter'] = false;
 			$this->alyStatus['entryNumber'] = $this->alyStatus['lineNumber'];
 			$this->alyStatus['data'] = array('sites' => array(), 'order numbers' => array(), 'dates' => array(), 'GMT timestamps' => array());
 			$this->alyStatus['add'] = true;
 			
 			$parseSecondLine = false;
 			
-			if (substr($line, 0, 1) == '[' && substr($line, 25, 4) == 'GMT]') {
+			if ($this->startsWithTimestamp($line)) {
 				$errorLineLayout = 'extended';
 				$parts = explode('== custom', $line, 2);
 				
@@ -429,7 +440,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				if (in_array($this->alyStatus['errorType'], $errorsWithAdditionalLineToParse) || $parseSecondLine) {
 					$newLine = $this->getNextLineOfCurrentFile($this->alyStatus);
-					$newLine = trim($newLine);
+					$this->alyStatus['stacktrace'] .= $newLine . "\n";
 					
 					// get aditional information from the next line
 					switch ($this->alyStatus['errorType']) {
@@ -638,11 +649,9 @@ class DemandwareLogAnalyser extends FileAnalyser {
 							preg_match('/, ID=(?P<id>.*?),.*?description=(?P<description>.*?),.*?pipelineName=(?P<pipeline>.*?),.*?startNodeName=(?P<node>.*?),/', $parts[1], $treffer);
 							
 							if(count($treffer)) {
-							
 								if( array_key_exists('id', $treffer) ) $this->alyStatus['data']['Job ID'][$treffer['id']] = true;
 								if( array_key_exists('description', $treffer) ) $this->alyStatus['data']['Job Description'][$treffer['description']] = true;
-								if( array_key_exists('pipeline', $treffer) ) $this->alyStatus['data']['Startnode'][$treffer['pipeline'] . '-' . $treffer['node']] = true;
-							
+								if( array_key_exists('pipeline', $treffer) ) $this->alyStatus['data']['Startnode'][$treffer['pipeline'] . '-' . $treffer['node']] = true;							
 							}
 							
 							$parts = explode(' [', $parts[1]);
@@ -681,6 +690,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				
 				if (in_array($this->alyStatus['errorType'], $errorsWithAdditionalLineToParse)) {
 					$newLine = $this->getNextLineOfCurrentFile();
+					$this->alyStatus['stacktrace'] .= $newLine . "\n";
 				
 				
 					// get aditional information from the next line
@@ -708,6 +718,7 @@ class DemandwareLogAnalyser extends FileAnalyser {
 								   ) $this->alyStatus['entry'] .= ' ' . $newLine;
 								
 								$newLine = $this->getNextLineOfCurrentFile();
+								$this->alyStatus['stacktrace'] .= $newLine . "\n";
 								$lines++;
 							}
 							return $newLine;
