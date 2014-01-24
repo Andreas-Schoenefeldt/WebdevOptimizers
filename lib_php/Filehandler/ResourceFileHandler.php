@@ -444,6 +444,13 @@ class ResourceFileHandler {
 	// Will add or change a key for a certain value
 	// this is the MAIN function to add or update new key value pairs to the resource files
 	function setKeyForFile($namespace, $key, $value, $rootfolder, $locale = 'default', $before = '', $after = ''){
+		
+		if ( !array_key_exists($locale, $this->localisationMap[$namespace][$rootfolder])) {
+			$this->getLocalisationMapEntry($namespace, $rootfolder, $locale);
+			$this->localisationMap[$namespace][$rootfolder][$locale]['path'] = str_replace($namespace, $namespace . '_' . $locale, $this->localisationMap[$namespace][$rootfolder]['default']['path']);
+			$this->localisationMap[$namespace][$rootfolder][$locale]['imported'] = true;
+		}
+		
 		if (!array_key_exists($key, $this->localisationMap[$namespace][$rootfolder][$locale]['keys']) || $this->localisationMap[$namespace][$rootfolder][$locale]['keys'][$key] != $value) {
 			
 			if ( !array_key_exists($namespace, $this->changedNamespaces)) 				$this->changedNamespaces[$namespace] = array();
@@ -485,7 +492,7 @@ class ResourceFileHandler {
 	function getBestResourceKeyNamespace($key) {
 		
 		// d($this->keyMap);
-		// d($key);
+		// d('|' . $key . '|');
 		
 		if (array_key_exists($key, $this->keyMap)) {
 			foreach ($this->keyMap[$key] as $namespace => $stats){
@@ -501,14 +508,11 @@ class ResourceFileHandler {
 			}
 			$oldDefaultFile = $this->getDefaultFile();
 			$this->io->out("We could not find a proper recource file for the unknown key " . $key . " in the project. Please select a fitting one.");
-			if ($this->setDefaultFile(true)) {
-				d($key);
-				d($this->getDefaultFile());
-				die('find out, how to pass the namespace');
-			}
-			
+			$this->setDefaultFile(true);
+			$namespace = $this->currentDefaultFile['namespace'];
 			$this->currentDefaultFile = $oldDefaultFile;
 			
+			return $namespace;
 		}
 		
 		return null;
@@ -743,6 +747,22 @@ class ResourceFileHandler {
 		return $keyC;
 	}
 	
+	
+	
+	function getLocalisationMapEntry($namespace, $rootfolder, $locale) {
+		
+		if ( !array_key_exists($locale, $this->localisationMap[$namespace][$rootfolder])) {
+			$this->localisationMap[$namespace][$rootfolder][$locale] = array(
+				'path' => '',
+				'keys' => array(),
+				'imported' => false
+			);
+		}
+		
+		return $this->localisationMap[$namespace][$rootfolder][$locale];
+	}
+	
+	
 	/**
 	 *	optimzes all the resource files of the project. Do only call after a project keyMap was registered with registerKeyMap
 	 */
@@ -807,13 +827,11 @@ class ResourceFileHandler {
 								$removedKeys[$namespace][$newFolder] = array();
 								// dublicate the old folder structure
 								foreach ($this->localisationMap[$namespace][$folder] as $locale => $rest) {
-									$this->localisationMap[$namespace][$newFolder][$locale] = array(
-										'path' => str_replace($folder, $newFolder, $this->localisationMap[$namespace][$folder][$locale]['path']),
-										'keys' => array(),
-										'imported' => true
-									);
-									
-									$removedKeys[$namespace][$newFolder][$locale] = array('keys' => $this->localisationMap[$namespace][$folder][$locale]['keys']);
+									$this->getLocalisationMapEntry($namespace, $newFolder, $locale);
+									$this->localisationMap[$namespace][$newFolder][$locale]['path'] = str_replace($folder, $newFolder, $this->localisationMap[$namespace][$folder][$locale]['path']);
+									$this->localisationMap[$namespace][$newFolder][$locale]['imported'] = true;
+									$remKeysArr =  $this->getLocalisationMapEntry($namespace, $folder, $locale);
+									$removedKeys[$namespace][$newFolder][$locale] = array('keys' => $remKeysArr['keys']);
 								}
 							}
 							
@@ -939,7 +957,7 @@ class ResourceFileHandler {
 					$filename = $ns.$fileadd.".properties";
 					$this->io->cmd_print(">" . (($onlyToScreen) ? '' : 'writing') ." $filename ($rootfolder)", true, 1);
 					
-					if (! $onlyToScreen) $this->io->setWriteMode('screen & file', $this->localisationMap[$ns][$rootfolder][$locale]['path']);
+					$this->io->setWriteMode('screen & file', $this->localisationMap[$ns][$rootfolder][$locale]['path']);
 					
 					$oldKey = null;
 					foreach ($this->localisationMap[$ns][$rootfolder][$locale]['keys'] as $key => $value) {
@@ -953,7 +971,16 @@ class ResourceFileHandler {
 							$oldKey = $testKey;
 						}
 						
-						$line = $key.'='.$value;
+						switch($this->environment){
+							default:
+								$line = $key.'='.$value;
+								break;
+							case 'openCMS':
+								$line = $key.'='. substr(json_encode($value), 1, -1);
+								break;
+						}
+						
+						
 						$this->io->cmd_print($line);
 					}
 					

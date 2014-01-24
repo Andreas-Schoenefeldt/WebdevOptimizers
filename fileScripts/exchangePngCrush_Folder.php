@@ -226,7 +226,7 @@
 				
 				fclose($fileHandle);
 			} else if (file_exists($datafilepath)) {
-				// delet the file if it is not needed
+				// delete the file if it is not needed
 				unlink($datafilepath);
 			}
 		}

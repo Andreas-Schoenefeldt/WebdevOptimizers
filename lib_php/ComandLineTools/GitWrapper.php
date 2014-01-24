@@ -70,10 +70,9 @@ class GitWrapper extends CodeControlWrapper {
 			$command = 'git pull origin ' . $sources[0];
 			$this->execute($command);			
 		} else if ($branch) { // this is a new branch
-			$command = 'git push origin ' . $branch; // push branch to remote repository
+			$command = 'git push --set-upstream origin ' . $branch; // push branch to remote repository
 			$this->execute($command);	
 		}
-		
 	}
 	
 	function add($files){

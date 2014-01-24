@@ -225,7 +225,7 @@
 						fwrite($file, '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">'. "\n");
 						fwrite($file, '<head profile="http://selenium-ide.openqa.org/profiles/test-case">'. "\n");
 						fwrite($file, '	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />'. "\n");
-						fwrite($file, '	<link rel="selenium.base" href="http://' . $location['environment'] . '/" />'. "\n");
+						fwrite($file, '	<link rel="selenium.base" href="https://' . $location['environment'] . '/" />'. "\n");
 						fwrite($file, '	<title>' . $conf['name'] . '</title>'. "\n");
 						fwrite($file, '</head>'. "\n");
 						fwrite($file, '<body>'. "\n");

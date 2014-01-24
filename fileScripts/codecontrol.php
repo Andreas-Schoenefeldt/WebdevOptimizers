@@ -117,12 +117,12 @@
 				'description' => 'Is doing a diff on the changed code'
  			)
 		),
-		'Use this script to have a uniform syntax for git and svn. At the same time, your commited messages are added to the emphasize time management tool.'
+		'Use this script to have a uniform syntax for git, mercurial and svn. At the same time, your commited messages are added to the emphasize time management tool.'
 	);
 	
 	$workingDir = getcwd();
 	$workingDirParts = explode('/', $workingDir);
-	$incidents = array('git', 'svn');
+	$incidents = array('git', 'svn', 'hg');
 	$io = new CmdIO();
 	$system = '';
 	
