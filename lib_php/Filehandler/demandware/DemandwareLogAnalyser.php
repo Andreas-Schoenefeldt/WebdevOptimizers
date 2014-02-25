@@ -838,15 +838,41 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		}
 		
 		if ($continue) {
+			
+			
+			//custom  infoscore/pipelets/RiskCheck.ds: Risk Check Result [[| {"status" : "OK", "communicationToken" : "46318476045772"} |]]
 		
 			// 'Unknown category ID'
 			
 			$errorType = explode(':', $this->alyStatus['entry'], 2);
 			$errorType[0] = trim($errorType[0]);
 			
+			
+			
 			if (count($errorType) > 1 && trim($errorType[1]) != '') {
 				
-				if (startsWith($errorType[0], 'Exception while evaluating script expression')){
+				
+				
+				// try to find out, weather we have a JSON standardized error message here
+				preg_match('/^(.*?)\[\[\|(.*)\|\]\]$/', $errorType[1], $matchesJSON);
+				
+				if(count($matchesJSON) && $matchesJSON[2]) {
+					
+					$this->alyStatus['errorType'] = $errorType[0];
+					$this->alyStatus['entry'] = $matchesJSON[1];
+					
+					$json = json_decode($matchesJSON[2], true);
+					
+					foreach($json as $key => $value) {
+						
+						if (is_numeric($key)) $key = '#' . $key;
+						if (is_numeric($value)) $value = '#' . $value;
+						
+						$this->alyStatus['data'][$key][$value] = true;
+						
+					}
+						
+				} else if (startsWith($errorType[0], 'Exception while evaluating script expression')){
 					$this->alyStatus['errorType'] = 'Script Exception';
 					$this->alyStatus['entry'] = $errorType[1]; // substr($errorType[0], 45) . 
 				} else if (startsWith($errorType[0], 'Error executing script')) {
