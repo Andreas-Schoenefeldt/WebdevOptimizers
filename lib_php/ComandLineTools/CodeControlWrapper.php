@@ -12,7 +12,7 @@ class CodeControlWrapper {
 	var $io;
 	var $emph_config = array(
 		'token' => 'jrb52ck0gggsc40sk48k', // jrb52ck0gggsc40sk48k
-		'url' => 'http://time.emphasize.de/util/ajax.php'
+		'url' => 'http://time.emphasize.de/time/util/ajax.php'
 	);
 	
 	/* --------------------
@@ -29,7 +29,7 @@ class CodeControlWrapper {
 	}
 	
 	function addComment($message){
-		$this->io->out("\n> Adding comment to http://time.emphasize.de...");
+		$this->io->out("\n> Adding comment to " . $this->emph_config['url'] );
 		$data = 'do=addInfo&token=' . $this->emph_config['token'] . '&info=' . urlencode($message) . '&time=' . urlencode(date('Y-m-d H:i:s'));
 		
 		$command = 'curl -L "' . $this->emph_config['url'] . '?' . $data . '"';

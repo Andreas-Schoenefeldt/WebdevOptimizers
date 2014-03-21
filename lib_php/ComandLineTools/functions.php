@@ -1,9 +1,35 @@
 <?php
 
 function date_operating_system_timezone_set() {
-	$parts = explode(' ', exec('systemsetup -gettimezone')); // outcome is something like "Time Zone: Europe/London" for Mac OS X
-	$timezone = $parts[count($parts) - 1];
-	date_default_timezone_set($timezone);
+	
+	$timezones = array(
+		  'GMT' => 'Europe/London'
+		, '0' => 'Europe/London'
+	);
+	
+	switch (PHP_OS){
+		default:
+			throw("Can'T handle OS: " . PHP_OS);
+			break;
+		case 'WIN':
+		case 'WINNT':
+				
+			$shell = new COM("WScript.Shell") or die("Requires Windows Scripting Host");
+			$time_bias = -($shell->RegRead("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation\\Bias"))/60;
+			$sc = $shell->RegRead("HKEY_USERS\\.DEFAULT\\Control Panel\\International\\sCountry"); 
+			$timezone = -($shell->RegRead("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation\\ActiveTimeBias"))/60;
+			
+			break;
+		case 'MACOS':
+			$timezone = exec('date +%Z');
+			break;
+	}
+	
+	if( array_key_exists($timezone, $timezones)) {		
+		date_default_timezone_set($timezones[$timezone]);
+	} else {
+		throw("Unknown Timezone " . $timezone);
+	}
 }
 
 ?>

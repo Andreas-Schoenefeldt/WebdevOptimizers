@@ -445,31 +445,36 @@ class ResourceFileHandler {
 	// this is the MAIN function to add or update new key value pairs to the resource files
 	function setKeyForFile($namespace, $key, $value, $rootfolder, $locale = 'default', $before = '', $after = ''){
 		
-		if ( !array_key_exists($locale, $this->localisationMap[$namespace][$rootfolder])) {
-			$this->getLocalisationMapEntry($namespace, $rootfolder, $locale);
-			$this->localisationMap[$namespace][$rootfolder][$locale]['path'] = str_replace($namespace, $namespace . '_' . $locale, $this->localisationMap[$namespace][$rootfolder]['default']['path']);
-			$this->localisationMap[$namespace][$rootfolder][$locale]['imported'] = true;
-		}
+		if($rootfolder) {
 		
-		if (!array_key_exists($key, $this->localisationMap[$namespace][$rootfolder][$locale]['keys']) || $this->localisationMap[$namespace][$rootfolder][$locale]['keys'][$key] != $value) {
-			
-			if ( !array_key_exists($namespace, $this->changedNamespaces)) 				$this->changedNamespaces[$namespace] = array();
-			if ( !array_key_exists($rootfolder, $this->changedNamespaces[$namespace])) 	$this->changedNamespaces[$namespace][$rootfolder] = array();
-				
-			$val = ($locale == 'default') ? '' : '_' . $locale;
-			
-			if ( !array_key_exists($locale, $this->changedNamespaces[$namespace][$rootfolder])) {
-				$this->changedNamespaces[$namespace][$rootfolder][$locale] = $val;
+			if ( !array_key_exists($locale, $this->localisationMap[$namespace][$rootfolder])) {
+				$this->getLocalisationMapEntry($namespace, $rootfolder, $locale);
+				$this->localisationMap[$namespace][$rootfolder][$locale]['path'] = str_replace($namespace, $namespace . '_' . $locale, $this->localisationMap[$namespace][$rootfolder]['default']['path']);
+				$this->localisationMap[$namespace][$rootfolder][$locale]['imported'] = true;
 			}
 			
-			$this->localisationMap[$namespace][$rootfolder][$locale]['keys'][$key] = $value;
-			
-			// add also to value map, if not existing
-			$this->addKeyByValue($value, $this->localisationMap[$namespace][$rootfolder][$locale]['path'], $key, $namespace, $rootfolder, null, $before, $after);
-			
-			// add also to keymap
-			if (! array_key_exists($key, $this->keyMap)) 				$this->keyMap[$key] = array();
-			if (! array_key_exists($namespace, $this->keyMap[$key]))	$this->keyMap[$key][$namespace] = array();
+			if (!array_key_exists($key, $this->localisationMap[$namespace][$rootfolder][$locale]['keys']) || $this->localisationMap[$namespace][$rootfolder][$locale]['keys'][$key] != $value) {
+				
+				if ( !array_key_exists($namespace, $this->changedNamespaces)) 				$this->changedNamespaces[$namespace] = array();
+				if ( !array_key_exists($rootfolder, $this->changedNamespaces[$namespace])) 	$this->changedNamespaces[$namespace][$rootfolder] = array();
+					
+				$val = ($locale == 'default') ? '' : '_' . $locale;
+				
+				if ( !array_key_exists($locale, $this->changedNamespaces[$namespace][$rootfolder])) {
+					$this->changedNamespaces[$namespace][$rootfolder][$locale] = $val;
+				}
+				
+				$this->localisationMap[$namespace][$rootfolder][$locale]['keys'][$key] = $value;
+				
+				// add also to value map, if not existing
+				$this->addKeyByValue($value, $this->localisationMap[$namespace][$rootfolder][$locale]['path'], $key, $namespace, $rootfolder, null, $before, $after);
+				
+				// add also to keymap
+				if (! array_key_exists($key, $this->keyMap)) 				$this->keyMap[$key] = array();
+				if (! array_key_exists($namespace, $this->keyMap[$key]))	$this->keyMap[$key][$namespace] = array();
+			}
+		} else {
+			$this->io->error('Could not find rootfolder for key ' .  $key);
 		}
 	}
 	
@@ -489,6 +494,8 @@ class ResourceFileHandler {
 		return array_key_exists($key, $this->keyMap);
 	}
 	
+	
+	// function to return a namespace based on  key
 	function getBestResourceKeyNamespace($key) {
 		
 		// d($this->keyMap);
@@ -496,8 +503,17 @@ class ResourceFileHandler {
 		
 		if (array_key_exists($key, $this->keyMap)) {
 			foreach ($this->keyMap[$key] as $namespace => $stats){
-				return $namespace;
+				
+				foreach ($stats['cartridges'] as $index => $cartridge) {
+					if(in_array($cartridge, $this->preferedPropertieLocations)) { // bingo, this file we wan't
+						return $namespace;	
+					}
+				}
 			}
+			
+			// in case we found no prefered
+			return $namespace;	
+			
 		} else {
 			$parts = explode('.', $key);
 			

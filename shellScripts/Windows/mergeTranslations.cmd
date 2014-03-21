@@ -1,0 +1,1 @@
+php "C:\Users\Andreas\Dropbox\Programming\fileScripts\MergeTranslationFile.php" %*

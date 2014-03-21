@@ -1,6 +1,5 @@
-#!/usr/local/bin/php -q
 <?php
-
+	
 	// date_default_timezone_set("Europe/Berlin");
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
