@@ -5,6 +5,8 @@ function date_operating_system_timezone_set() {
 	$timezones = array(
 		  'GMT' => 'Europe/London'
 		, '0' => 'Europe/London'
+		, '1' => 'Europe/London'
+		, '2' => 'Europe/Berlin'
 	);
 	
 	switch (PHP_OS){
@@ -28,7 +30,7 @@ function date_operating_system_timezone_set() {
 	if( array_key_exists($timezone, $timezones)) {		
 		date_default_timezone_set($timezones[$timezone]);
 	} else {
-		throw("Unknown Timezone " . $timezone);
+		die("Unknown Timezone: " . $timezone);
 	}
 }
 

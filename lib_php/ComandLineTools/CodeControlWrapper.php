@@ -12,7 +12,7 @@ class CodeControlWrapper {
 	var $io;
 	var $emph_config = array(
 		'token' => 'jrb52ck0gggsc40sk48k', // jrb52ck0gggsc40sk48k
-		'url' => 'http://time.emphasize.de/time/util/ajax.php'
+		'url' => 'http://time.emphasize.de/util/ajax.php'
 	);
 	
 	/* --------------------
