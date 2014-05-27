@@ -767,7 +767,16 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		} else if ($this->startsWithTimestamp($line)) { // a log entry is unfortuatly only finished after we found the next entry or end of file 
 			$this->alyStatus['add'] = true;
 			return $line;
-		} 
+		} else { // now we try to find general error information like QueryString:, PathInfo: etc.
+			$generalInformations = array('QueryString');
+			
+			foreach($generalInformations as $index => $searchString){
+				if (startsWith($line, $searchString))	{
+					$value = substr($line, strlen($searchString) + 2);
+					$this->alyStatus['data'][$searchString][$value] = true;
+				}
+			}
+		}
 	}
 	
 	function getErrorType_1($entry){
