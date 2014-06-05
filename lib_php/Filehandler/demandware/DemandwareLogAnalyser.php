@@ -98,16 +98,22 @@ class DemandwareLogAnalyser extends FileAnalyser {
 				, 'solve' => function($definition, $alyStatus){
 					
 					preg_match('/^.*?getUrlByUri, \((?P<referrer>.*?)\)java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape \(%\) pattern - For input string: "(?P<string>.*?)".*?$/', $alyStatus['entry'], $matches);
+					if(! count($matches)) {
+						preg_match('/^.*?getUrlByUri, \((?P<referrer>.*?)\)java.lang.IllegalArgumentException: URLDecoder: (?P<exception>.*?)$/', $alyStatus['entry'], $matches);
+					}
 					
-					$alyStatus['data']['errorString'][$matches['string']] = true;
+					if( array_key_exists('string',  $matches)) $alyStatus['data']['errorString'][$matches['string']] = true;
 					
-					if ($matches['referrer'] && startsWith($matches['referrer'], 'referrer url=')) {
+					if (array_key_exists('referrer',  $matches) && startsWith($matches['referrer'], 'referrer url=')) {
 						$alyStatus['data']['referrer'][substr($matches['referrer'], 13)] = true;
 						$alyStatus['entry'] = 'Illegal hex characters in escape (%) pattern from external URL.';
-					} else {
+					} else if (array_key_exists('referrer',  $matches)){
 						$alyStatus['data']['URI'][substr($matches['referrer'], 4)] = true;
 						$alyStatus['entry'] = 'Illegal hex characters in escape (%) pattern from URI.';
 					}
+					
+					if( array_key_exists('exception',  $matches)) $alyStatus['entry'] = $matches['exception'];
+	
 					return $alyStatus;
 				}
 			),
