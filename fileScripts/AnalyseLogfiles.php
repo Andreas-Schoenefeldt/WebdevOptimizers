@@ -217,6 +217,7 @@
 		// check if the file exists before
 		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" ";
 		$command = $commandBody . '"' . $webdavUrl . '/' . $filename . '"';
+		$io->out($command);
 		$output = shell_exec($command);
 		$lines = explode("\n", trim($output));
 		

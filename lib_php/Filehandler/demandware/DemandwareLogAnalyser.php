@@ -92,6 +92,27 @@ class DemandwareLogAnalyser extends FileAnalyser {
 			),
 			
 			array(
+				  'start' => 'CORE debug     : <RedirectUrlMgrImpl> getUrlByUri, '
+				, 'type' => 'URLDecoder'
+				, 'weight'	=> 0
+				, 'solve' => function($definition, $alyStatus){
+					
+					preg_match('/^.*?getUrlByUri, \((?P<referrer>.*?)\)java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape \(%\) pattern - For input string: "(?P<string>.*?)".*?$/', $alyStatus['entry'], $matches);
+					
+					$alyStatus['data']['errorString'][$matches['string']] = true;
+					
+					if ($matches['referrer'] && startsWith($matches['referrer'], 'referrer url=')) {
+						$alyStatus['data']['referrer'][substr($matches['referrer'], 13)] = true;
+						$alyStatus['entry'] = 'Illegal hex characters in escape (%) pattern from external URL.';
+					} else {
+						$alyStatus['data']['URI'][substr($matches['referrer'], 4)] = true;
+						$alyStatus['entry'] = 'Illegal hex characters in escape (%) pattern from URI.';
+					}
+					return $alyStatus;
+				}
+			),
+			
+			array(
 				  'start' => 'Java constructor for'
 				, 'type' => 'Java constructor'
 				, 'weight'	=> 3
