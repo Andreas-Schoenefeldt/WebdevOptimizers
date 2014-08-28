@@ -112,6 +112,7 @@
 			$time = date($config['timestampformat'], $timestamp);
 		
 			$searchExpressions[$layout] = str_replace('${timestamp}', $time, $config['regexTemplate']);
+			$results[$layout] = array(); // to keep the order as defined
 		}
 		
 		// reading the listing file line by line and downloading the files, if we have a match
