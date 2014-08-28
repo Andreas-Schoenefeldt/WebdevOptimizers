@@ -5,7 +5,9 @@
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
 	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Mail/Mail.php');
-
+	
+	define("LOCAL_LISTING_FILENAME", '_listing.html' );
+	
 	$params = new CmdParameterReader(
 		$argv,
 		array(
@@ -60,6 +62,7 @@
 		$env = $params->getVal('e');
 		$class = capitalise($env) .'LogAnalyser';
 		
+		// dynamically including the Demandware class
 		require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/' . $env . '/' . $class . '.php');
 		
 		// this is a remote connection, start the remote process
@@ -80,16 +83,74 @@
 			$analyser->printResults();
 		}
 	}
+	
+	function getTimeStamp($date) {
+		$splits = ($date) ? explode('.', $date) : array();
+		$day = (count($splits) == 3) ?   $splits[0] : date("d");
+		$month = (count($splits) == 3) ? $splits[1] : date("m");
+		$year = (count($splits) == 3) ?  $splits[2] : date("Y");
+		
+		return strtotime("$year-$month-$day 00:00:00.000 GMT");
+	}
+	
+	function downloadRelevantFiles($configFile, $date, $download){
+		global $io;
+		
+		require($configFile);
+		$searchExpressions = array();
+		$results = array();
+		
+		$timestamp = getTimeStamp($date);
+		
+		// listing of the logfolder
+		if($download) download($webdavUser, $webdavPswd, $webdavUrl, '', $targetWorkingFolder, $alertConfiguration);
+		
+		// preparing the search expressions
+		foreach ($logConfiguration as $layout => $config) {
+			
+			if (! $date) $timestamp += $config['dayoffset'] * 86400; // change the date by the number of days
+			$time = date($config['timestampformat'], $timestamp);
+		
+			$searchExpressions[$layout] = str_replace('${timestamp}', $time, $config['regexTemplate']);
+		}
+		
+		// reading the listing file line by line and downloading the files, if we have a match
+		$io->out('> parsing ' . LOCAL_LISTING_FILENAME);
+		$fp = fopen( $targetWorkingFolder . '/' . LOCAL_LISTING_FILENAME , 'r');
+		$linecount = 1;
+		while(($line = fgets($fp)) !== false){
+		
+			$linecount++;
+		
+			foreach($searchExpressions as $layout => $searchExpression){
+				preg_match_all('/<tt>(' . $searchExpression . ')<\\/tt>/', $line, $match);
+				
+				if(count($match[0])) {
+					for ($i = 0; $i < count($match[1]); $i++) {
+						$file = $match[1][$i];
+						$io->out("\n".'> line ' . $linecount . " \t found file " . $file );
+						$target = $targetWorkingFolder . '/' . $file;
+						if ($download) download($webdavUser, $webdavPswd, $webdavUrl, $file, $targetWorkingFolder, $alertConfiguration);
+						$results[$layout][] = $target;
+					}
+				}
+			}
+		}
+		
+		return $results;
+	}
 
 	function processLogFiles($configFile) {
 		global $params, $io, $class, $configBaseDir;
-		$configPath = str_replace($configBaseDir, '', $configFile);
-		$io->out('> Config File: '.$configPath);
 		
-		require_once($configFile);
+		$timestamp = getTimeStamp($params->getVal('d'));
+		$configPath = str_replace($configBaseDir, '', $configFile);
+		$io->out('> Config File: '.$configPath, true, 1);
+		
+		require($configFile);
 		
 		set_error_handler('custom_error_handler', E_ALL);
-
+		
 		try {
 		
 			$alertConfiguration['configPath'] = $configPath;
@@ -106,28 +167,8 @@
 			}
 			
 			$io->out('> Coppying Files...');
-			$results = array();
-				
-			foreach ($logConfiguration as $layout => $config) {
-				
-				$splits = ($params->getVal('d')) ? explode('.', $params->getVal('d')) : array();
-				
-				$day = (count($splits) == 3) ?   $splits[0] : date("d");
-				$month = (count($splits) == 3) ? $splits[1] : date("m");
-				$year = (count($splits) == 3) ?  $splits[2] : date("Y");
-				
-				$timestamp = strtotime("$year-$month-$day 00:00:00.000 GMT");
-				if (! $params->getVal('d')) $timestamp += $config['dayoffset'] * 86400; // change the date by the number of days
-				
-				$time = date($config['timestampformat'], $timestamp);
-				
-				for ($i = 0; $i < count($config['fileBodys']); $i++){
-					$file = str_replace('${timestamp}', $time, $config['fileBodys'][$i]) . '.' . $config['extension'];
-					$target = $targetWorkingFolder . '/' . $file;
-					if ($download) download($webdavUser, $webdavPswd, $webdavUrl, $file, $targetWorkingFolder, $alertConfiguration);
-					$results[$layout][] = $target;
-				}
-			}
+			
+			$results = downloadRelevantFiles($configFile, $params->getVal('d'), $download, $timestamp);
 			
 			$htmlWorkingDir = $targetWorkingFolder . '/html';
 			if (! file_exists($htmlWorkingDir)) mkdir($htmlWorkingDir);
@@ -214,6 +255,8 @@
 	function download($webdavUser, $webdavPswd, $webdavUrl, $filename, $localWorkingDir, $alertConfiguration) {
 		global $io;
 		
+		$localeFileName = $filename ? $filename : LOCAL_LISTING_FILENAME;
+		
 		// check if the file exists before
 		$commandBody = "curl -k -I -L --user \"$webdavUser:$webdavPswd\" ";
 		$command = $commandBody . '"' . $webdavUrl . '/' . $filename . '"';
@@ -235,7 +278,7 @@
 			$io->out('> ----------------------------------');
 			$io->out('> Downloading ' . $filename);
 			$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
-			$command =  $commandBody . '"' . $webdavUrl . '/' . $filename . '" -o "' . $localWorkingDir . '/' . $filename . '"' ;
+			$command =  $commandBody . '"' . $webdavUrl . '/' . $filename . '" -o "' . $localWorkingDir . '/' . $localeFileName . '"' ;
 			
 			$lastline = system($command, $retval);
 			// retry logic

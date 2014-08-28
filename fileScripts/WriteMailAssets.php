@@ -384,7 +384,12 @@
 		preg_match_all('/\${[ ]*?_css\([ ]*?["\'][ ]*?(?P<css>.*?)[ ]*?["\'][ ]*?\)[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
 		for ($i = 0; $i < count($matches['css']); $i++){
 			$key = $matches['css'][$i];
-			$string = str_replace($matches[0][$i], $vars['CSS'][$key], $string);
+			
+			if (! array_key_exists('CSS', $vars)) {
+				$io->error('no CSS array found for context ' . $vars('displayName') . '. ', 'general config.');
+			} else {
+				$string = str_replace($matches[0][$i], $vars['CSS'][$key], $string);
+			}
 		}
 		
 		preg_match_all('/\${[ ]*?locale[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
