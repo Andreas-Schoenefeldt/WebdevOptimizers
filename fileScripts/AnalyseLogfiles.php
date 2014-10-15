@@ -304,11 +304,14 @@
 	function upload($webdavUser, $webdavPswd, $htmlWorkingDir, $webdavUrl, $filename) {
 		global $io;
 		
+		$uploadPath = $webdavUrl . '/html/' . $filename;
+		$localFile = $htmlWorkingDir . '/' . $filename;
 		$commandBody = "curl -k --user \"$webdavUser:$webdavPswd\" ";
-		$command =  $commandBody . '-T "' . $htmlWorkingDir . '/' . $filename . '" "' . $webdavUrl . '/html/' . $filename . '"';
+		$command =  $commandBody . '-T "' . $localFile . '" "' . $uploadPath . '"';
 		
 		$io->out('> ----------------------------------');
 		$io->out('> Uploading ' . $filename); 
+		$io->out('>' . $localFile . ' to ' . $uploadPath);
 		$lastline = system($command, $retval);
 		// retry logic
 		if($retval > 0) {
@@ -319,37 +322,7 @@
 		return true;
 	}
 	
-	/**
-	 * Calls a function for every file in a folder.
-	 *
-	 * @param string $dir The directory to traverse.
-	 * @param string $pattern The file pattern to call the function for. Leave as NULL to match all pattern.
-	 * @param bool $recursive Whether to list subfolders as well.
-	 * @param string $callback The function to call. It must accept one argument that is a relative filepath of the file.
-	 */
-	function forEachFile($dir, $pattern = null, $recursive = false, $callback) {
-		if ($dh = opendir($dir)) {
-			while (($file = readdir($dh)) !== false) {
-				if ($file === '.' || $file === '..') {
-					continue;
-				}
-				if (is_file($dir . $file)) {
-					if ($pattern) {
-						if (!preg_match("/$pattern/", $file)) {
-							continue;
-						}
-					}
-					$callback($dir.$file);
-				}elseif($recursive && is_dir($dir . $file)) {
-					forEachFile($dir . $file . DIRECTORY_SEPARATOR, $pattern, $recursive, $callback);
-				}
-			}
-			closedir($dh);
-		}
-	}
-	
-	function custom_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
-	{
+	function custom_error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
 		$constants = get_defined_constants(1);
 
 		$eName = 'Unknown error type';

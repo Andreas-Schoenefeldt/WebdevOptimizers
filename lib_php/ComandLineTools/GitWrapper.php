@@ -18,7 +18,7 @@ class GitWrapper extends CodeControlWrapper {
 	}
 	
 	function update(){
-		$this->execute('git pull');
+		$this->execute('git pull --all');
 	}
 	
 	function version(){
@@ -72,12 +72,14 @@ class GitWrapper extends CodeControlWrapper {
 		} else if ($branch) { // this is a new branch
 			$command = 'git push --set-upstream origin ' . $branch; // push branch to remote repository
 			$this->execute($command);	
+		} else {
+			$this->execute("git pull");
 		}
 	}
 	
 	function add($files){
 		if (count($files) == 0) { // add . is default
-			$files[] = '.';
+			$files[] = '--all'; // the add all command
 		}
 		
 		$command = 'git add ' . implode(' ', $files);

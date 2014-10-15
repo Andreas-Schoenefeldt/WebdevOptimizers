@@ -1,7 +1,10 @@
 <?php
 require_once(str_replace('//','/',dirname(__FILE__).'/') .'PseudoText.php');
 
-class PseudoXML extends PseudoText{
+// this class comnverts a file into php xmlNode Objects
+// only usable for smaller files, use the xmlStreamReader for large ones
+
+class PseudoXML extends PseudoText {
 	
 	var $currentIndent; // the indent of the line. Is used for the textnode mode
 	var $textIndent; // the base text indent

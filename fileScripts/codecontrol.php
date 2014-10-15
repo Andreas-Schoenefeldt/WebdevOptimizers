@@ -105,7 +105,7 @@
 			
 			'l' => array(
 				'name' => 'log',
-				'datatype' => 'List',
+				'datatype' => 'Boolean',
 				
 				'description' => 'Shows the log of the repository.'
 			),

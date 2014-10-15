@@ -1,10 +1,50 @@
 <?php
 
 require_once(str_replace('//','/',dirname(__FILE__).'/') .'../CmdIO.php');
+require_once(str_replace('//','/',dirname(__FILE__).'/') .'../Debug/libDebug.php');
 
 $io = new CmdIO();
 
 $globalIgnoreFiles = array('.svn' => true, '.git' => true, '.DS_Store' => true, '.' => true, '..' => true);
+
+
+/**
+ * Calls a function for every file in a folder.
+ *
+ * @param string $dir The directory to traverse.
+ * @param string $pattern The file pattern to call the function for. Leave as NULL to match all pattern.
+ * @param bool $recursive Whether to list subfolders as well.
+ * @param string $callback The function to call. It must accept one argument that is a relative filepath of the file.
+ */
+function forEachFile($dir, $pattern = null, $recursive = false, $callback) {
+	
+	if ( substr($dir, -1, 1) != DIRECTORY_SEPARATOR ) $dir = $dir . DIRECTORY_SEPARATOR;
+	
+	if ($dh = opendir($dir)) {
+		while (($file = readdir($dh)) !== false) {
+			if ($file === '.' || $file === '..') {
+				continue;
+			}
+			
+			if (is_file($dir . $file)) {
+				if ($pattern) {
+					if (!preg_match("/$pattern/", $file)) {
+						continue;
+					}
+				}
+				$callback($dir.$file);
+			}elseif($recursive && is_dir($dir . $file)) {
+				forEachFile($dir . $file . DIRECTORY_SEPARATOR, $pattern, $recursive, $callback);
+			} else {
+				d($dir . $file . ' is not a file');
+			}
+		}
+		closedir($dh);
+	} else {
+		d('> could not open ' . $dir);
+	}
+}
+
 
 /* ------------------------------------------------------------------------
  * A function to iterate recursivly over the contents of an folder. The fileFunction will be called on each file with the parameters of the current filepath and the starting directory
