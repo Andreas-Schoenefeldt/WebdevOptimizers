@@ -32,7 +32,7 @@ class XMLStreamReader extends StreamReader {
 		
 		if(strlen($part == 0)) $part = $this->getLine();
 		
-		while($part){
+		while($part !== false){
 			
 			$openPos = stripos($part, '<');
 			$closePos = stripos($part, '>');

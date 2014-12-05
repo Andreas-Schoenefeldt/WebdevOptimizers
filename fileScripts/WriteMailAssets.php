@@ -219,7 +219,6 @@
 		function processTemplate($string, $site, $vars, $forReplace, $tmplateId){
 			global $siteAssets, $io, $brand, $hostBase;
 			
-			
 			preg_match_all('/\${[ ]*?_decorate\([ ]*?["\'][ ]*?(?P<decorator>.*?)[ ]*?["\'][ ]*?\)[ ]*?}/', $string, $matches, PREG_PATTERN_ORDER);
 			for ($i = 0; $i < count($matches['decorator']); $i++){
 				$this->decoratorStack[$tmplateId] = $matches['decorator'][$i];
@@ -325,6 +324,10 @@
 	
 	
 	function getLanguage($entry) {
+		global $locals;
+		if (in_array($entry, $locals)) {
+			return $entry;
+		}
 		$splits = explode('-', $entry);
 		return ($splits[0] == 'x') ? 'en' : $splits[0];
 	}

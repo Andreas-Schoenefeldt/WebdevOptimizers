@@ -28,23 +28,58 @@
 	} else {
 	
 		$resultFile = fopen($params->getVal('f'), 'w');
+		$def = array(
+			  'siteID'             
+			, 'orderNo'           
+			, 'order-date'         
+			, 'order total'
+			, 'currency'  
+			, 'customer-name' 
+			, 'gender'  
+			, 'customer-email' 
+			, 'order-status'  
+			, 'payment-status' 
+			, 'ogonePaymentMethod' 
+			, 'card-type'   
+			, 'authorized3DS'  
+			, 'processor-id' 
+			, 'transaction-id'
+			, 'ogoneStatus'  
+			, 'orderOrigin'  
+		);
+		
+		fputcsv($resultFile, $def);
 		
 		forEachFile($folderToParse, '.*\.xml', true, 'parseXmlFile');
 		
 		fclose($resultFile);
 	}
 	
+	function printCsvLine($line){
+		global $def, $resultFile;
+		
+		$resultArray = array();
+		
+		foreach ($def as $i => $key) {
+			$resultArray[] = array_key_exists($key, $line) ? $line[$key] : '';
+		}
+		
+		fputcsv($resultFile, $resultArray);
+	}
+	
 		
 		
 	function parseXmlFile($xmlFile) {
-		global $resultFile;
+		global $io;
 		
-		d($xmlFile);
+		$io->out('> parsing file ' . $xmlFile);
 		
 		$reader = new XMLStreamReader($xmlFile);
 
 		while($event = $reader->getNextEvent()){
 			$xmlNode = $event->getContentObject();
+			
+		//	$io->out($xmlNode->nodeName);
 			
 			switch($event->getEventType()) {
 				case EVENT_NODE_OPEN:
@@ -92,8 +127,8 @@
 				case EVENT_NODE_CLOSE:
 					switch($xmlNode->nodeName){
 						case 'order':
-							d($csvLine);
-							die();
+							$io->out(' > order ' . $csvLine['orderNo']);
+							printCsvLine($csvLine);
 							break;
 						case 'order-total':
 							$inOrderTotal = false;
@@ -102,9 +137,6 @@
 					break;
 			}
 		}
-		
-		
-		die();
 	}
 	
 	

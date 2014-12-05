@@ -18,7 +18,7 @@ class GitWrapper extends CodeControlWrapper {
 	}
 	
 	function update(){
-		$this->execute('git pull --all');
+		$this->execute('git pull');
 	}
 	
 	function version(){

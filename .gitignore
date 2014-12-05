@@ -2,3 +2,4 @@
 .crushdata
 config.php
 fileScripts/AnalyseLogfiles/
+fileScripts/Analytics/

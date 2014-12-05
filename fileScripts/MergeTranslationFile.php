@@ -162,17 +162,20 @@
 			// read the mergefile
 			$mergefile = fopen($params->getVal('f'), 'r');
 			
-			$parts = fgetcsv($mergefile);
+			$headers = fgetcsv($mergefile);
 			
-			if (count($parts) < 2) {
+			if (count($headers) < 2) {
 				$io->fatal('Is your file valid? The cells have to be seperated with , and you need the hadlines in the file: default, fr, es, de for example.');
-				d($parts);
+				d($headers);
 			} 
 			
 			// build the keymap
-			for ($i = 1; $i < count($parts); $i++) {
-				$mergeKeys[trim($parts[$i])] = array('keys' => array());
-				$indexes[$i] = trim($parts[$i]);
+			for ($i = 1; $i < count($headers); $i++) {
+				$header = trim($headers[$i]);
+				if (substr($header, 0, 1) != '#' ) {
+					$mergeKeys[$header] = array('keys' => array());
+					$indexes[$i] = $header;
+				}
 			}
 			
 			$lineNumber = 1;
@@ -180,14 +183,15 @@
 				$lineNumber++;
 				$key = trim($parts[0]);
 				for ($i = 1; $i < count($parts); $i++) {
-					$value = trim($parts[$i]);
-					
-					if ($key && $value) {
-						$mergeKeys[$indexes[$i]]['keys'][$key] = trim($value);
-					} else {
-						$io->warn( $key . ' - no value for ' . $indexes[$i], 'line ' . $lineNumber);
+					if ($indexes[$i]){ // only take valid headers
+						$value = trim($parts[$i]);
+						
+						if ($key && $value) {
+							$mergeKeys[$indexes[$i]]['keys'][$key] = trim($value);
+						} else {
+							$io->warn( $key . ' - no value for ' . $indexes[$i], 'line ' . $lineNumber);
+						}
 					}
-					
 				}
 				
 			}
