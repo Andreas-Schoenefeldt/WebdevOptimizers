@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [origin undefined is not known to the function getTrackingUrl] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: origin undefined is not known to the function getTrackingUrl</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 1050
+
+Last logfile impacted: customwarn-blade5-0-appserver-20141209.log
+
+Logfile size: 92.8 KB
+
+[2014-12-09 10:17:06.611 GMT] WARN RequestHandlerServlet|4643986|Sites-QS-FR-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|EJt7CBCCFrj295IoiJELbqW4nQk60Fy_OjHJAyJo0xD7qRj4Y6smoF1zldMPGFYHybfrfncelv8g3a1K8T5XMw== custom  origin undefined is not known to the function getTrackingUrl
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_customwarn.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

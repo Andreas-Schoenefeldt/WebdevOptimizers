@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [ Silentpay Request returned 3ds Enroled Credit Card. Sending Customer to external site. ] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type:  Silentpay Request returned 3ds Enroled Credit Card. Sending Customer to external site. </p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 3
+
+Last logfile impacted: customwarn-blade4-4-appserver-20141209.log
+
+Logfile size: 76.09 KB
+
+[2014-12-09 09:30:03.742 GMT] WARN RequestHandlerServlet|29264944|Sites-DC-RU-Site|COPlaceOrder-Start|PipelineCall|ITg5lqi0s4NTaSkJYK0bwaWvLcppfOTiTCGcMdPbUcUvT1BgW1nGPz3H65kgLT1s7bNMVYn5YW4P4PmV8SmTIQ== custom  SendAssistAuthorization.ds: Silentpay Request returned 3ds Enroled Credit Card. Sending Customer to external site. [[| {"OrderNo" : "3322529", "ExternalUrl" : "https://acs2.sbrf.ru:443/acs/pa?id=391999222766376"} |]]
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_customwarn.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

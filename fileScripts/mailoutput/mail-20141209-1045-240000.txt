@@ -1,0 +1,33 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [COPlaceOrder-Start > Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: COPlaceOrder-Start > Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 15
+
+Last logfile impacted: error-blade5-0-appserver-20141209.log
+
+Logfile size: 18538.73 KB
+
+[2014-12-09 08:36:52.707 GMT] ERROR RequestHandlerServlet|24610072|Sites-QS-FR-Site|COPlaceOrder-Start|PipelineCall|92npQIm9ZIrm5Dj3YMoIn32udwd2aflWIhglK7ZM3UhDX_ELu7235a4e0MKYowU8pfLSlllHeLhDhThzKSjGdg== system.TemplateScriptError  - Sites-QS-FR-Site TemplateScriptError Storefront 92npQIm9ZIrm5Dj3YMoIn32udwd2aflWIhglK7ZM3UhDX_ELu7235a4e0MKYowU8pfLSlllHeLhDhThzKSjGdg== uWftRlSGtKQjAgAK-0-00 9053869510849589248 "TypeError: Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)
+System Information
+------------------
+RequestID: uWftRlSGtKQjAgAK-0-00
+SessionType: STOREFRONT
+SessionID: 92npQIm9ZIrm5Dj3YMoIn32udwd2aflWIhglK7ZM3UhDX_ELu7235a4e0MKYowU8pfLSlllHeLhDhThzKSjGdg==
+ServerName: localhost
+ServerPort: 10113
+1
+Request Information
+-------------------
+URI: /servlet/Beehive/Sites-QS-FR-Site/fr_FR/COPlaceOrder-Start
+Method: GET
+PathInfo: /Sites-QS-FR-Site/fr_FR/COPlaceOrder-Start
+Remote Address: 80.215.163.192
+1
+Request Parameters
+------------------"
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_error.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

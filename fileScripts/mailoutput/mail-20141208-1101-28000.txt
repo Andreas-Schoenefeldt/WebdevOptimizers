@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [ Assist Capture successfully ] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type:  Assist Capture successfully </p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 4
+
+Last logfile impacted: customwarn-blade5-0-appserver-20141208.log
+
+Logfile size: 143.49 KB
+
+[2014-12-08 09:22:17.473 GMT] WARN RequestHandlerServlet|16480351|Sites-DC-RU-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|81BGcFpGHUnDLVHHCeC6xZmH1bYoQuCKsklNOh9M2sU0rLAlX5fEsU3qXpkf0isfhHWBBQUVBcOcQP9CzQK1Ig== custom  SendAssistCapture.ds: Assist Capture successfully [[| {"Order" : "3319051"} |]]
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1417996800_customwarn.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

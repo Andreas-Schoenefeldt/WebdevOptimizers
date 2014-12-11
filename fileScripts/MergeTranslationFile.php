@@ -89,69 +89,152 @@
 			$appRootPath = $matches[0];
 		}
 		
-		// parse all the keyfiles and build up the translation map and localisationFiles
-		recurseIntoFolderContent($appRootPath, $appRootPath, function($filepath, $baseDirectory){
-			global $resourceFileHandler;
-			$resourceFileHandler->addResourceFile($filepath, $baseDirectory);
-		}, true);
-		
-		
 		// read the projects configuration file, if existend
 		$configFileName = $appRootPath . '/.translation.config';
 		$config = array();
 		if (file_exists($configFileName)){
-			$io->out("\n> found a config file " . $configFileName);
+			$io->out("\n> Using config file " . $configFileName);
 			$config = readConfig($configFileName);
 		} else {
-			$io->error("No Config file found in " . $configFileName);
+			$io->error("No config file found at " . $configFileName);
 		}
+		
+		// parse all the keyfiles and build up the translation map and localisationFiles
+		recurseIntoFolderContent($appRootPath, $appRootPath, function($filepath, $baseDirectory){
+			global $resourceFileHandler, $config, $appRootPath;
+			
+			$parts = explode('/', str_replace($appRootPath, '', $filepath));
+			
+			if (! array_key_exists('cartridgepath', $config) || (count($parts > 2) && in_array($parts[1], $config['cartridgepath']))) {
+				$resourceFileHandler->addResourceFile($filepath, $baseDirectory);
+			}
+		}, true);
 		
 		if (array_key_exists('prefered_propertie_locations', $config)) {
 			$resourceFileHandler->setPreferedPropertieLocations($config['prefered_propertie_locations']);
 		}
 		
-		if ($params->getVal('xa') || $params->getVal('x')) {
+		$exportAll = $params->getVal('xa');
+		
+		if ($exportAll || $params->getVal('x')) {
 			
-			$namespaces = $params->getVal('xa') ? array_keys($resourceFileHandler->localisationMap) : array($params->getVal('x'));
+			$namespaces = $exportAll ? array_keys($resourceFileHandler->localisationMap) : array($params->getVal('x'));
+			
+			// set up the global export file
+			if ($exportAll){
+				$exportDirectory = is_dir($params->getVal('f')) ? $params->getVal('f') : dirname($params->getVal('f'));
+				$exportAllFileName = is_dir($params->getVal('f')) ? $exportDirectory . '/ALL-KEYS-EXPORT.csv' : $params->getVal('f');	
+			}
+			
+			$allKeys = array('key' => array());
+			
+			// go through all the namespaces
 			for ($i = 0; $i < count($namespaces); $i++) {
 				
 				$namespace = $namespaces[$i];
-				$fileName = $params->getVal('xa') ? $params->getVal('f') . '/' . $namespace . '.csv' : $params->getVal('f');
+				$fileName = $exportAll ? $exportDirectory . '/' . $namespace . '.csv' : $params->getVal('f');
 			
 				if (array_key_exists($namespace, $resourceFileHandler->localisationMap)) {
+					$cartridgeKeys = $resourceFileHandler->getPreferedLocalisationMap($namespace, array_key_exists('cartridgepath', $config) ? $config['cartridgepath'] : null );
+					
+					// first we get the header
+					$keys = array('key' => array());
+					for ($c = 0; $c < count($config['cartridgepath']); $c++) {
+						if (array_key_exists( $config['cartridgepath'][$c] , $cartridgeKeys)) {
+							$locals = $cartridgeKeys[$config['cartridgepath'][$c]];
+							foreach ($locals as $locale => $stats) {
+								if (! array_key_exists($locale, $keys)) 
+									$keys[$locale] = array();
+									
+								if (! array_key_exists($locale, $allKeys)) {
+									// a new key emerged, we set all that happened before to ''
+									$allKeys[$locale] = count($allKeys['key']) > 0 ? array_fill(0, count($allKeys['key']), '') : array();
+								}
+							}
+						}
+					}
+					
+					// the we go through all the keys
+					for ($c = 0; $c < count($config['cartridgepath']); $c++) {
+						if (array_key_exists( $config['cartridgepath'][$c] , $cartridgeKeys)) {
+							$locals = $cartridgeKeys[$config['cartridgepath'][$c]];
+							
+							// write the file
+							foreach ($locals['default']['keys'] as $key => $translation) {
+							
+								// if we have the key already, we move on
+								if (in_array($key, $keys)) break;
+							
+								$keys['key'][] = $key;
+								if ($exportAll) $allKeys['key'][] = $key;
+								
+								// we make sure, that we miss no existing locale defined in the project
+								foreach ($allKeys as $locale => $stats) {
+									if($locale != 'key') {
+										switch($params->getVal('e')) {
+											default:
+												$value = array_key_exists($locale, $locals) && array_key_exists($key, $locals[$locale]['keys']) ? $locals[$locale]['keys'][$key] : '';
+												break;
+											case 'openCMS':
+												$value = array_key_exists($locale, $locals) && array_key_exists($key, $locals[$locale]['keys']) ? unicode_conv($locals[$locale]['keys'][$key]) : '';
+												break;
+										}
+										
+										$keys[$locale][] = $value;
+										if ($exportAll) $allKeys[$locale][] = $value;
+									}
+								}
+							}
+						}
+					}
+					
+					// write the single file 
 					$io->out("> exporting namespace $namespace to file " . $fileName);
 					$mergefile = fopen($fileName, 'w');
-					$locals = $resourceFileHandler->getPreferedLocalisationMap($namespace);
 					
-					// write the header
-					$header = array('keys');
-					foreach ($locals as $locale => $stats) {
+					// first the header
+					foreach ($keys as $locale => $stats) {
 						$header[] = $locale;
 					}
 					fputcsv($mergefile, $header);
 					
-					// write the file
-					
-					foreach ($locals['default']['keys'] as $key => $translation) {
-						$line = array($key);
-						foreach ($locals as $locale => $stats) {
-							switch($params->getVal('e')) {
-								default:
-									$line[] = array_key_exists($key, $locals[$locale]['keys']) ? $locals[$locale]['keys'][$key] : '';
-									break;
-								case 'openCMS':
-									$line[] = array_key_exists($key, $locals[$locale]['keys']) ? unicode_conv($locals[$locale]['keys'][$key]) : '';
-									break;
-							}
-						}
+					// then the keys
+					for ($k = 0; $k < count($keys['key']); $k++){
+						$line = array();
+						for($h = 0; $h < count($header); $h++){
+							$line[] = $keys[$header[$h]][$k];
+						} 
 						fputcsv($mergefile, $line);
 					}
-					
+
 					fclose($mergefile);
+					
 				} else {
 					$io->error("The namespace $namespace was not found among the paresed resource files.");
 				}
 			}
+			
+			// writing the global file
+			$io->out("> exporting all keys also to combined file " . $exportAllFileName);
+			$mergefile = fopen($exportAllFileName, 'w');
+			
+			// first the header
+			$header = array();
+			foreach ($allKeys as $locale => $stats) {
+				$header[] = $locale;
+			}
+			fputcsv($mergefile, $header);
+			
+			// then the keys
+			for ($k = 0; $k < count($allKeys['key']); $k++){
+				$line = array();
+				for($h = 0; $h < count($header); $h++){
+					$line[] = $allKeys[$header[$h]][$k];
+				} 
+				fputcsv($mergefile, $line);
+			}
+
+			fclose($mergefile);
 			
 		} else {
 		

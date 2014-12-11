@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [ confirm.error.technical ] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type:  confirm.error.technical </p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 33
+
+Last logfile impacted: customwarn-blade5-0-appserver-20141209.log
+
+Logfile size: 92.8 KB
+
+[2014-12-09 09:39:08.657 GMT] WARN RequestHandlerServlet|29564595|Sites-DC-GB-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|lLEudRxiMx_6MyM9iko5FsWe3ZmWiHIvWC-D39x2idTLSMeyA41vNiYy3Lcaua9WtmJjddc7FbGY0fPskRgepQ== custom  COPlaceOrder-Start: confirm.error.technical [[| {"OrderNo" : "null"} |]]
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_customwarn.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

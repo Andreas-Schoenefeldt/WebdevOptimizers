@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [ Exit because of error parameter in URL: checkout.payment.confirm.error.authorizationDeclinedGeneral ] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type:  Exit because of error parameter in URL: checkout.payment.confirm.error.authorizationDeclinedGeneral </p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 17
+
+Last logfile impacted: customwarn-blade5-0-appserver-20141208.log
+
+Logfile size: 143.49 KB
+
+[2014-12-08 08:31:50.236 GMT] WARN RequestHandlerServlet|12801122|Sites-RX-DE-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|uyisJeuBcvsw52YfZxsjBgNV5_fIGqdjKlFKTwNs7Iaavg-6xUXL-QImD6nMWEGT8klu1__WGHwn2qBAV9C6ag== custom  COPlaceOrder-HandleAsyncPaymentEntry: Exit because of error parameter in URL: checkout.payment.confirm.error.authorizationDeclinedGeneral [[| {"OrderNo" : "3319010"} |]]
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1417996800_customwarn.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

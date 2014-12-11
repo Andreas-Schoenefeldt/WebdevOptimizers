@@ -55,20 +55,28 @@ class ResourceFileHandler {
 		return ($mode == $this->resourceFileParsingMode || $this->resourceFileParsingMode == 'both');
 	}
 	
-	// Returns all the localized key value pairs of the default location for this namespace
-	function getPreferedLocalisationMap($namespace) {
-		foreach ($this->localisationMap[$namespace] as $rootfolder => $locales) {
-			if ($this->isPreferedLocation($rootfolder)) return $locales;
-		}
+	// Returns all the localized key value pairs of the default location(s) for this namespace
+	//
+	// @param $namespace	the namespace to get
+	// @param $cartridges	allows to override the prefered locations with another cartridge path
+	function getPreferedLocalisationMap($namespace, $cartridges = array()) {
 		
+		$result = array();
+		
+		foreach ($this->localisationMap[$namespace] as $rootfolder => $locales) {
+			if (in_array($rootfolder, $cartridges) || $this->isPreferedLocation($rootfolder)) {
+				$result[$rootfolder] = $locales;
+			}
+		}
 		
 		// if we have not found a prefered one, we return the first entry
 		foreach ($this->localisationMap[$namespace] as $rootfolder => $locales) {
-			return $locales;
+			$result[$rootfolder] = $locales;
+			break;
 		}
 		
 		// in case it was empty
-		return array();
+		return $result;
 	}
 	
 	/**

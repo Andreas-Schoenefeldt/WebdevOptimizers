@@ -1,0 +1,35 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [COPlaceOrder-HandleAsyncPaymentEntry > Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: COPlaceOrder-HandleAsyncPaymentEntry > Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 23
+
+Last logfile impacted: error-blade5-0-appserver-20141209.log
+
+Logfile size: 18538.73 KB
+
+[2014-12-09 08:51:21.149 GMT] ERROR RequestHandlerServlet|9124992|Sites-QS-GB-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|J6N7Ez8U7V_uttH_HsLjwj6ezauLFJEZ7HfwQAY9m89W9nnJ-I0EMQ3T_EvT9nUT8Pe6WVwhXoakD4xJahh1og== system.TemplateScriptError  - Sites-QS-GB-Site TemplateScriptError Storefront J6N7Ez8U7V_uttH_HsLjwj6ezauLFJEZ7HfwQAY9m89W9nnJ-I0EMQ3T_EvT9nUT8Pe6WVwhXoakD4xJahh1og== Q1uDllSGuAkjAgAK-0-00 978993975855106048 "TypeError: Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)
+System Information
+------------------
+RequestID: Q1uDllSGuAkjAgAK-0-00
+SessionType: STOREFRONT
+SessionID: J6N7Ez8U7V_uttH_HsLjwj6ezauLFJEZ7HfwQAY9m89W9nnJ-I0EMQ3T_EvT9nUT8Pe6WVwhXoakD4xJahh1og==
+ServerName: localhost
+ServerPort: 10113
+1
+Request Information
+-------------------
+URI: /servlet/Beehive/Sites-QS-GB-Site/en_GB/COPlaceOrder-HandleAsyncPaymentEntry
+Method: GET
+PathInfo: /Sites-QS-GB-Site/en_GB/COPlaceOrder-HandleAsyncPaymentEntry
+QueryString: error=
+Remote Address: 86.134.77.207
+1
+Request Parameters
+------------------
+error="
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_error.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

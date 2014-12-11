@@ -1,0 +1,17 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [OgoneError: ncError: 30001103, ncStatus: 3, status: 2, ncErrorPlus: Le pays de la carte n'est pas autorisé.] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: OgoneError: ncError: 30001103, ncStatus: 3, status: 2, ncErrorPlus: Le pays de la carte n'est pas autorisé.</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 5
+
+Last logfile impacted: customerror-blade1-2-appserver-20141208.log
+
+Logfile size: 24.69 KB
+
+[2014-12-08 03:49:12.160 GMT] ERROR RequestHandlerServlet|17427719|Sites-QS-IE-Site|COPlaceOrder-Start|PipelineCall|CBTrG_7vFEviPO5qmqRkMh0fMQdAG_Gx3bDnTBlVysr0ric867ldRHOUJcPmh2YGvJ6T2P3slMqk9rbRSZogvg== custom.ogone  SendOgoneAuthorization.ds: An error occured during Ogone Direct Link Authorization Request: Error: Error: Error: Error returned by Ogone Direct Link request. Return Code: 200; Message: OK; RequestUrl:
+https://secure.ogone.com/ncol/prod/orderdirect.asp?PSPID=QUIKSILVEREUR2&PSWD=***&USERID=APIQUIK2&OWNERTOWN=GALWAY&PARAMVAR=on%2Fdemandware.store%2FSites-QS-IE-Site%2Fen_IE&CANCELURL=https%3A%2F%2Fwww.quiksilver.ie%2Fon%2Fdemandware.store%2FSites-QS-IE-Site%2Fen_IE%2FOgone-Canceled&LANGUAGE=fr_FR&ED=***&FLAG3D=Y&AMOUNT=14900&OWNERTELNO=***&OWNERZIP=***&CVC=***&PM=CREDITCARD&PARAMPLUS=dw_is3ds%3Dtrue%26dw_paymentmethodid%3DCREDIT_CARD&ORDERID=3318861&CURRENCY=EUR&BACKURL=https%3A%2F%2Fwww.quiksilver.ie%2Fon%2Fdemandware.store%2FSites-QS-IE-Site%2Fen_IE%2FOgone-Canceled&CARDNO=***&ACCEPTURL=https%3A%2F%2Fwww.quiksilver.ie%2Fon%2Fdemandware.store%2FSites-QS-IE-Site%2Fen_IE%2FOgone-Accepted&OPERATION=RES&OWNERCTY=IE&EMAIL=***&SHASIGN=fd7be2710cafaed9cceab1b4e69ed7de21854c27&EXCEPTIONURL=https%3A%2F%2Fwww.quiksilver.ie%2Fon%2Fdemandware.store%2FSites-QS-IE-Site%2Fen_IE%2FOgone-Excepted&DECLINEURL=https%3A%2F%2Fwww.quiksilver.ie%2Fon%2Fdemandware.store%2FSites-QS-IE-Site%2Fen_IE%2FOgone-Declined&CN=***&OWNERADDRESS=***; OgoneError: ncError: 30001103, ncStatus: 3, status: 2, ncErrorPlus: Le pays de la carte n'est pas autorisé.; Seconds since start: 2.739, OrderNo: 3318861
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1417996800_customerror.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

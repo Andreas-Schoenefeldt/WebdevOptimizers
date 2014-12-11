@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [object.OrderPO  (internal, warn 600000, limit 1000000)] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: object.OrderPO  (internal, warn 600000, limit 1000000)</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 297
+
+Last logfile impacted: quota-blade5-0-appserver-20141209.log
+
+Logfile size: 318.52 KB
+
+[2014-12-09 10:29:00.122 GMT] [RequestHandlerServlet|5582386|Sites-RX-FR-Site|COPlaceOrder-Start|PipelineCall|n20RLnGdy0bSAV7tdLjJBta9iNh37sDFvy48Nca3THDj5R5PEK5Fty6SxJ0741NWGQMUu389XKtdDPCvgjs0JA==] Quota object.OrderPO (internal, warn 600000, limit 1000000): limit exceeded 1 time(s), max actual was 1132445, current location: request/site Sites-RX-FR-Site/top pipeline COPlaceOrder-Start/pipelet CreateOrder2
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_quota.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

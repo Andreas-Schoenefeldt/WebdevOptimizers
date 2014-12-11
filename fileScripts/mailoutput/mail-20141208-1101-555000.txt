@@ -1,0 +1,35 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [COPlaceOrder-Start > Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: COPlaceOrder-Start > Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 28
+
+Last logfile impacted: error-blade5-0-appserver-20141208.log
+
+Logfile size: 16410.63 KB
+
+[2014-12-08 10:16:52.286 GMT] ERROR RequestHandlerServlet|9124992|Sites-QS-FR-Site|COPlaceOrder-Start|PipelineCall|mbzfXgB-e5tiVOI_wKYkFCRtmzKE-W5mdCkgQT_ePVxKyc-U4n24GbiWecvZoNf7MWOMuC-_ZYP1T0nzcOjJig== system.TemplateScriptError  - Sites-QS-FR-Site TemplateScriptError Storefront mbzfXgB-e5tiVOI_wKYkFCRtmzKE-W5mdCkgQT_ePVxKyc-U4n24GbiWecvZoNf7MWOMuC-_ZYP1T0nzcOjJig== FTIV8lSFepQjAgAK-0-00 8142952537925264384 "TypeError: Cannot call method "getAllProductLineItems" of null ( "napali_core:product/libRecommendation.ds" ); ... }]#9)
+System Information
+------------------
+RequestID: FTIV8lSFepQjAgAK-0-00
+SessionType: STOREFRONT
+SessionID: mbzfXgB-e5tiVOI_wKYkFCRtmzKE-W5mdCkgQT_ePVxKyc-U4n24GbiWecvZoNf7MWOMuC-_ZYP1T0nzcOjJig==
+Customer: braida
+login: 40ocean@gmail.fr
+ServerName: localhost
+ServerPort: 10113
+1
+Request Information
+-------------------
+URI: /servlet/Beehive/Sites-QS-FR-Site/fr_FR/COPlaceOrder-Start
+Method: GET
+PathInfo: /Sites-QS-FR-Site/fr_FR/COPlaceOrder-Start
+Remote Address: 86.221.125.175
+1
+Request Parameters
+------------------"
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1417996800_error.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

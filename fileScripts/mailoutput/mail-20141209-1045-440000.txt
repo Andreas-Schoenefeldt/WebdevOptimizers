@@ -1,0 +1,37 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  ["css_region_margin" is not defined. ([Template:mail/pt_mail_RX:${css_region_margin}]#1)] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: "css_region_margin" is not defined. ([Template:mail/pt_mail_RX:${css_region_margin}]#1)</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 268
+
+Last logfile impacted: error-blade5-0-appserver-20141209.log
+
+Logfile size: 18538.73 KB
+
+[2014-12-09 10:29:18.858 GMT] ERROR RequestHandlerServlet|25149692|Sites-RX-FR-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|n20RLnGdy0bSAV7tdLjJBta9iNh37sDFvy48Nca3THDj5R5PEK5Fty6SxJ0741NWGQMUu389XKtdDPCvgjs0JA== system.TemplateScriptError  - Sites-RX-FR-Site TemplateScriptError Storefront n20RLnGdy0bSAV7tdLjJBta9iNh37sDFvy48Nca3THDj5R5PEK5Fty6SxJ0741NWGQMUu389XKtdDPCvgjs0JA== rGcXEVSGzv0jAgAK-0-00 298340835357359104 "ReferenceError: "css_region_margin" is not defined. ([Template:mail/pt_mail_RX:${css_region_margin}]#1)
+System Information
+------------------
+RequestID: rGcXEVSGzv0jAgAK-0-00
+SessionType: STOREFRONT
+SessionID: n20RLnGdy0bSAV7tdLjJBta9iNh37sDFvy48Nca3THDj5R5PEK5Fty6SxJ0741NWGQMUu389XKtdDPCvgjs0JA==
+Customer: Priser
+login: gwenola.priser1@orange.fr
+ServerName: localhost
+ServerPort: 10113
+1
+Request Information
+-------------------
+URI: /servlet/Beehive/Sites-RX-FR-Site/fr_FR/COPlaceOrder-HandleAsyncPaymentEntry
+Method: GET
+PathInfo: /Sites-RX-FR-Site/fr_FR/COPlaceOrder-HandleAsyncPaymentEntry
+QueryString: error=
+Remote Address: 80.11.201.163
+1
+Request Parameters
+------------------
+error="
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_error.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

@@ -1,0 +1,16 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [ confirm.error.declined ] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type:  confirm.error.declined </p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 1
+
+Last logfile impacted: customwarn-blade1-2-appserver-20141209.log
+
+Logfile size: 143.28 KB
+
+[2014-12-09 10:12:54.322 GMT] WARN RequestHandlerServlet|14835825|Sites-QS-IT-Site|COPlaceOrder-Start|PipelineCall|vuB3eWD8FidbEHtedUsuLRULNiWlvhBJbmG4X8cO2yq7IQFX466MZCWuzR-FYcHg8kifwnKWMUfGruxJQY3xng== custom  COPlaceOrder-Start: confirm.error.declined [[| {"OrderNo" : "3322661"} |]]
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_customwarn.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>

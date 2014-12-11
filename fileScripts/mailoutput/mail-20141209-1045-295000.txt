@@ -1,0 +1,37 @@
+To: 
+Subject: ALERT: Log alert on production.store.napali.demandware.net  [[CancelOrder] Order has already been failed.] - Pattern 'COPlaceOrder' matched
+MIME-Version: 1.0
+Content-type: text/html; charset=utf-8
+From: alm@bee.io
+
+<html><head></head><body><p>Error Type: [CancelOrder] Order has already been failed.</p><pre style="font:inherit;">Threshold: Pattern 'COPlaceOrder' matched.
+
+Error Count: 5
+
+Last logfile impacted: error-blade4-5-appserver-20141209.log
+
+Logfile size: 20166.26 KB
+
+[2014-12-09 09:33:49.662 GMT] ERROR RequestHandlerServlet|30117638|Sites-RX-FR-Site|COPlaceOrder-HandleAsyncPaymentEntry|PipelineCall|nP5rMyQXQ9os64kcq69Wfk-ZK8hHf5bQ812cV6GayaNBEwG-RyexK38DO7jcdvPLZdCPv47zQWDQKA6LGx-U3A== system.bc_api  - Sites-RX-FR-Site bc_api Storefront nP5rMyQXQ9os64kcq69Wfk-ZK8hHf5bQ812cV6GayaNBEwG-RyexK38DO7jcdvPLZdCPv47zQWDQKA6LGx-U3A== gVqoF1SGwf0jAgAK-0-00 3042885072882200576 "[CancelOrder] Order has already been failed.
+System Information
+------------------
+RequestID: gVqoF1SGwf0jAgAK-0-00
+SessionType: STOREFRONT
+SessionID: nP5rMyQXQ9os64kcq69Wfk-ZK8hHf5bQ812cV6GayaNBEwG-RyexK38DO7jcdvPLZdCPv47zQWDQKA6LGx-U3A==
+Customer: KEROUANTON
+login: denis.kerouanton@wanadoo.fr
+ServerName: localhost
+ServerPort: 10113
+1
+Request Information
+-------------------
+URI: /servlet/Beehive/Sites-RX-FR-Site/fr_FR/COPlaceOrder-HandleAsyncPaymentEntry
+Method: GET
+PathInfo: /Sites-RX-FR-Site/fr_FR/COPlaceOrder-HandleAsyncPaymentEntry
+QueryString: error=checkout%2epayment%2econfirm%2eerror%2eauthenticationFailedUnsure
+Remote Address: 92.132.50.214
+1
+Request Parameters
+------------------
+error=checkout.payment.confirm.error.authenticationFailedUnsure"
+</pre><p><a href="https://production.store.napali.demandware.net/on/demandware.servlet/webdav/Sites/Logs/html/1418083200_error.html" style="font-weight: bold;font-size: 1.2em;display:inline-block; background-color: #84c7f6; text-decoration:none;padding: 4px 8px;border: 1px solid #35688b; border-radius: 3px;">View Online</a></p></body></html>
