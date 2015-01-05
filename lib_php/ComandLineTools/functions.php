@@ -6,7 +6,9 @@ function date_operating_system_timezone_set() {
 		  'GMT' => 'Europe/London'
 		, '0' => 'Europe/London'
 		, '1' => 'Europe/London'
+		, 'GMT Standard Time' => 'Europe/London'
 		, '2' => 'Europe/Berlin'
+		, 'W. Europe Standard Time' => 'Europe/Berlin'
 	);
 	
 	switch (PHP_OS){
@@ -15,12 +17,7 @@ function date_operating_system_timezone_set() {
 			break;
 		case 'WIN':
 		case 'WINNT':
-				
-			$shell = new COM("WScript.Shell") or die("Requires Windows Scripting Host");
-			$time_bias = -($shell->RegRead("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation\\Bias"))/60;
-			$sc = $shell->RegRead("HKEY_USERS\\.DEFAULT\\Control Panel\\International\\sCountry"); 
-			$timezone = -($shell->RegRead("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation\\ActiveTimeBias"))/60;
-			
+			$timezone = exec('tzutil /g');
 			break;
 		case 'MACOS':
 			$timezone = exec('date +%Z');
@@ -28,6 +25,7 @@ function date_operating_system_timezone_set() {
 	}
 	
 	if( array_key_exists($timezone, $timezones)) {		
+		echo("> timezone identified as " . $timezones[$timezone] . "\n");
 		date_default_timezone_set($timezones[$timezone]);
 	} else {
 		die("Unknown Timezone: " . $timezone);

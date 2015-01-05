@@ -29,9 +29,9 @@ class CodeControlWrapper {
 	}
 	
 	function addComment($message){
-		$this->io->out("\n> Adding comment to " . $this->emph_config['url'] );
-		$data = 'do=addInfo&token=' . $this->emph_config['token'] . '&info=' . urlencode($message) . '&time=' . urlencode(date('Y-m-d H:i:s'));
-		
+		$time = date('Y-m-d H:i:s');
+		$this->io->out("\n> Adding comment to " . $this->emph_config['url'] . " at " . $time);
+		$data = 'do=addInfo&token=' . $this->emph_config['token'] . '&info=' . urlencode($message) . '&time=' . urlencode($time);
 		$command = 'curl -L "' . $this->emph_config['url'] . '?' . $data . '"';
 		// d($command);
 		$this->execute($command);
