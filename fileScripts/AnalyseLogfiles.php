@@ -47,6 +47,12 @@
 				'datatype' => 'String',
 				'default' => '24:00',
 				'description' => 'a time after this the logs are ignored. Write as h:mm in 24h format'
+			),
+			'site' => array(
+				  'name' => 'site'
+				, 'datatype' => 'String'
+				, 'default' => 'ALL'
+				, 'description' => 'Allows to filter log messages only for a specific site. eg US'
 			)
 		),
 		'A script to parse a logfile and return the results in a readable form.'
@@ -116,23 +122,41 @@
 		}
 		
 		// reading the listing file line by line and downloading the files, if we have a match
-		$io->out('> parsing ' . LOCAL_LISTING_FILENAME);
-		$fp = fopen( $targetWorkingFolder . '/' . LOCAL_LISTING_FILENAME , 'r');
-		$linecount = 1;
-		while(($line = fgets($fp)) !== false){
-		
-			$linecount++;
-		
-			foreach($searchExpressions as $layout => $searchExpression){
-				preg_match_all('/<tt>(' . $searchExpression . ')<\\/tt>/', $line, $match);
-				
-				if(count($match[0])) {
-					for ($i = 0; $i < count($match[1]); $i++) {
-						$file = $match[1][$i];
-						$io->out("\n".'> line ' . $linecount . " \t found file " . $file );
-						$target = $targetWorkingFolder . '/' . $file;
-						if ($download) download($webdavUser, $webdavPswd, $webdavUrl, $file, $targetWorkingFolder, $alertConfiguration);
-						$results[$layout][] = $target;
+		if ($download) {
+			$io->out('> parsing ' . LOCAL_LISTING_FILENAME);
+			$fp = fopen( $targetWorkingFolder . '/' . LOCAL_LISTING_FILENAME , 'r');
+			$linecount = 1;
+			while(($line = fgets($fp)) !== false){
+			
+				$linecount++;
+			
+				foreach($searchExpressions as $layout => $searchExpression){
+					preg_match_all('/<tt>(' . $searchExpression . ')<\\/tt>/', $line, $match);
+					
+					if(count($match[0])) {
+						for ($i = 0; $i < count($match[1]); $i++) {
+							$file = $match[1][$i];
+							$io->out("\n".'> line ' . $linecount . " \t found file " . $file );
+							$target = $targetWorkingFolder . '/' . $file;
+							download($webdavUser, $webdavPswd, $webdavUrl, $file, $targetWorkingFolder, $alertConfiguration);
+							$results[$layout][] = $target;
+						}
+					}
+				}
+			}
+		} else {
+			// locale file listings
+			$io->out('> listing ' . $targetWorkingFolder);
+			foreach(scandir($targetWorkingFolder) as $index => $filename){
+				foreach($searchExpressions as $layout => $searchExpression){
+					preg_match_all('/(' . $searchExpression . ')/', $filename, $match);
+					if( count($match[0]) ){
+						for ($i = 0; $i < count($match[1]); $i++) {
+							$file = $match[1][$i];
+							$io->out("> found file " . $file );
+							$target = $targetWorkingFolder . '/' . $file;
+							$results[$layout][] = $target;
+						}
 					}
 				}
 			}
@@ -193,6 +217,7 @@
 			$settings = array(
 				  'from' => $params->getVal('ts')
 				, 'to' => $params->getVal('te')
+				, 'site' => $params->getVal('site')
 				, 'timestamp' => $timestamp
 				, 'timezoneOffset' => 0
 			);

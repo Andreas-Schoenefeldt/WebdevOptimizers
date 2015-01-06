@@ -21,6 +21,9 @@ class DemandwareLogAnalyser extends FileAnalyser {
 		
 		parent::__construct($file, 'demandware', $layout, $settings, $alertConfiguration);
 		
+		// adding site setting
+		$this->settings['site'] = $settings['site'];
+		
 		// error handling
 		$this->errorExceptions = $this->mergeExceptionHandling(array(
 			array(
@@ -231,11 +234,15 @@ class DemandwareLogAnalyser extends FileAnalyser {
 	}
 	
 	function addError($fileIdent, $line){
-		$errorCount = $this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
-		$alertMail = $this->checkAlert($errorCount, $this->alyStatus['stacktrace']);
-		
-		if (!empty($alertMail)) {
-			$this->alertMails[$this->alyStatus['entry']] = $alertMail;
+	
+		// additional dw specific checks against the site
+		if (! $this->settings['site'] || $this->settings['site'] == 'ALL' ||  array_key_exists($this->settings['site'], $this->alyStatus['data']['sites'])) {
+			$errorCount = $this->addEntry($this->alyStatus['timestamp'], $this->alyStatus['errorType'], $this->alyStatus['entry'], $this->alyStatus['entryNumber'], $this->alyStatus['fileIdent'], $this->alyStatus['data'], $this->alyStatus['stacktrace']);
+			$alertMail = $this->checkAlert($errorCount, $this->alyStatus['stacktrace']);
+			
+			if (!empty($alertMail)) {
+				$this->alertMails[$this->alyStatus['entry']] = $alertMail;
+			}
 		}
 		
 		$this->initAlyStatus($fileIdent, $this->alyStatus['lineNumber'], $line);
