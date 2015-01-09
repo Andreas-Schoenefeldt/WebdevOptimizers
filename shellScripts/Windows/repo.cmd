@@ -1,1 +1,1 @@
-php "C:\Users\Andreas\Dropbox\Programming\fileScripts\codecontrol.php" %*
+php "C:\Users\Andreas\Dropbox\Scripting\WebdevOptimizers\scripts\codecontrol.php" %*

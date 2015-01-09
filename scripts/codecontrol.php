@@ -1,10 +1,12 @@
 <?php
 	
 	// date_default_timezone_set("Europe/Berlin");
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/functions.php');
+	$pathToPHPShellHelpers = str_replace('//','/',dirname(__FILE__).'/') .'../../PHP-Shell-Helpers/';
+	
+	require_once($pathToPHPShellHelpers .'CmdIO.php');
+	require_once($pathToPHPShellHelpers .'Filehandler/staticFunctions.php');
+	require_once($pathToPHPShellHelpers .'ComandLineTools/CmdParameterReader.php');
+	require_once($pathToPHPShellHelpers .'ComandLineTools/functions.php');
 	
 	date_operating_system_timezone_set();
 	
@@ -149,7 +151,7 @@
 		$io->fatal( $workingDir . ' has no known repository system (' . implode(', ', $incidents) . ')' , 'codecontrol');
 	} else {
 		$name = strtoupper(substr( $system, 0,1)) . substr( $system, 1) . 'Wrapper';
-		require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/' . $name .  '.php');
+		require_once($pathToPHPShellHelpers . 'ComandLineTools/' . $name .  '.php');
 		
 		$cc = new $name();
 		
