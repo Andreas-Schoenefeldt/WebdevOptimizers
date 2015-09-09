@@ -1,11 +1,13 @@
 #!/usr/local/bin/php -q
 <?php
-	
 	date_default_timezone_set("Europe/Berlin");
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/ResourceFileHandler.php');
+	
+	$pathToPHPShellHelpers = str_replace('//','/',dirname(__FILE__).'/') .'../../PHP-Shell-Helpers/';
+	
+	require_once($pathToPHPShellHelpers . 'CmdIO.php');
+	require_once($pathToPHPShellHelpers . 'Filehandler/staticFunctions.php');
+	require_once($pathToPHPShellHelpers . 'ComandLineTools/CmdParameterReader.php');
+	require_once($pathToPHPShellHelpers . 'Filehandler/ResourceFileHandler.php');
 
 	$params = new CmdParameterReader(
 		$argv,
@@ -17,7 +19,8 @@
 				'values' => array(
 					'demandware' => array('name' => 'dw'),
 					'grails' => array('name' => 'g'),
-					'openCMS' => array('name' => 'ocms')
+					'openCMS' => array('name' => 'ocms'),
+					'zend' => array('name' => 'z')
 				),
 				
 				'description' => 'Defines the software environment of your project.'
@@ -51,7 +54,7 @@
 				'description' => 'If the Root Folder of the Project differ from the environments default, you can add this here.'
 			),
 		),
-		'A script to parse a IT project and incect new i18n keys into the appropriate resource files. The cells of the csv have to be seperated with , and you need the hadlines in the file: default, fr, es, de for example.'
+		'A script to parse a IT project and inject new i18n keys into the appropriate resource files. The cells of the csv have to be separated with , and you need the headlines in the file: default, fr, es, de for example.'
 	);
 	
 	$fileToTranslate = $params->getFileName();
@@ -59,6 +62,8 @@
 	if(!$fileToTranslate){
 		$params->print_usage();
 	} else {
+		
+		$resourceFileSheme = "Java";
 		
 		switch ($params->getVal('e')){
 			default:
@@ -71,12 +76,27 @@
 			case 'openCMS':
 				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'modules'; // for now we just support the merge of one module
 				break;
+			case 'zend':
+				$resourceFileSheme = "zend";
+				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'application'; // for now we just support the merge of one module
+				break;
 		}
 		
 		/** ----------------------------------------------------------------
 		 * initialise the resource file handler
 		 */
-		$resourceFileHandler = new ResourceFileHandler('both', $params->getVal('e'));
+		switch ($resourceFileSheme){
+			default:
+				$class = 'ResourceFileHandler';
+				break;
+			case 'zend':
+				$class = capitalise($resourceFileSheme) .'ResourceFileHandler';
+				// dynamically including the Zend parser class
+				require_once($pathToPHPShellHelpers . 'Filehandler/' . $resourceFileSheme . '/' . $class . '.php');
+				break;
+		}
+		
+		$resourceFileHandler = new $class('both', $params->getVal('e'));
 		
 		// now, cut the path until the root folder, getcwd() to get the full path of the file
 		$fullPath = getcwd() . '/' . $fileToTranslate;
@@ -84,7 +104,7 @@
 		preg_match('/.*?\/' . $rootfolder . '/', $fullPath, $matches);
 		
 		if (count($matches) == 0) {
-			$io->fatal("No rootfolder '" . $rootfolder . "' found. Has your project the standard " . $params->getVal('e') . " filestructure? If not, try to add the project rootfolder name with the -root parameter.", 'AddTranslation');
+			$io->fatal("No rootfolder '" . $rootfolder . "' found. Has your project the standard " . $params->getVal('e') . " filestructure? If not, try to add the project rootfolder name with the -root parameter. We tested against $fullPath", 'AddTranslation');
 		} else {
 			$appRootPath = $matches[0];
 		}
@@ -135,13 +155,36 @@
 				$fileName = $exportAll ? $exportDirectory . '/' . $namespace . '.csv' : $params->getVal('f');
 			
 				if (array_key_exists($namespace, $resourceFileHandler->localisationMap)) {
-					$cartridgeKeys = $resourceFileHandler->getPreferedLocalisationMap($namespace, array_key_exists('cartridgepath', $config) ? $config['cartridgepath'] : null );
+					
+					if (array_key_exists('cartridgepath', $config)){
+						$cartridgepath = $config['cartridgepath'];
+						
+					} else {
+						// we have no cartridge path, but need one, lets make a proposal
+						$cartridgepath = array();
+						$cartridgeKeys = $resourceFileHandler->getPreferedLocalisationMap($namespace, $cartridgepath); // default with all cartridges
+						foreach ($cartridgeKeys as $cartridge => $stats) {
+							$cartridgepath[] = $cartridge;
+						}
+						
+						// ask the user
+						$keyAdd = $io->readStdInn("> No cartridge path is defined, would you like to take " . implode(',' , $cartridgepath) . " (enter), or enter the one you would prefer (seperate multiple values with, and without space)");
+						if ($keyAdd != '') {
+							$cartridgepath = explode(',', $keyAdd);
+						}
+						
+						$config['cartridgepath'] = $cartridgepath;
+						
+						writeConfig($configFileName, $config);
+					}
+					
+					$cartridgeKeys = $resourceFileHandler->getPreferedLocalisationMap($namespace, $cartridgepath);
 					
 					// first we get the header
 					$keys = array('key' => array());
-					for ($c = 0; $c < count($config['cartridgepath']); $c++) {
-						if (array_key_exists( $config['cartridgepath'][$c] , $cartridgeKeys)) {
-							$locals = $cartridgeKeys[$config['cartridgepath'][$c]];
+					for ($c = 0; $c < count($cartridgepath); $c++) {
+						if (array_key_exists( $cartridgepath[$c] , $cartridgeKeys)) {
+							$locals = $cartridgeKeys[$cartridgepath[$c]];
 							foreach ($locals as $locale => $stats) {
 								if (! array_key_exists($locale, $keys)) 
 									$keys[$locale] = array();
@@ -155,9 +198,9 @@
 					}
 					
 					// the we go through all the keys
-					for ($c = 0; $c < count($config['cartridgepath']); $c++) {
-						if (array_key_exists( $config['cartridgepath'][$c] , $cartridgeKeys)) {
-							$locals = $cartridgeKeys[$config['cartridgepath'][$c]];
+					for ($c = 0; $c < count($cartridgepath); $c++) {
+						if (array_key_exists( $cartridgepath[$c] , $cartridgeKeys)) {
+							$locals = $cartridgeKeys[$cartridgepath[$c]];
 							
 							// write the file
 							foreach ($locals['default']['keys'] as $key => $translation) {
@@ -196,6 +239,7 @@
 					foreach ($keys as $locale => $stats) {
 						$header[] = $locale;
 					}
+					
 					fputcsv($mergefile, $header);
 					
 					// then the keys
@@ -266,7 +310,7 @@
 				$lineNumber++;
 				$key = trim($parts[0]);
 				for ($i = 1; $i < count($parts); $i++) {
-					if ($indexes[$i]){ // only take valid headers
+					if ( array_key_exists($i, $indexes) && $indexes[$i]){ // only take valid headers
 						$value = trim($parts[$i]);
 						
 						if ($key && $value) {
@@ -289,6 +333,20 @@
 				}
 			}
 		}
+	}
+	
+	function writeConfig($configFile, $config) {
+		global $io;
+		
+		$io->out('> Updating config file ' . $configFile);
+		
+		$fp = fopen($configFile, 'w');
+		
+		foreach ($config as $key => $values) {
+			fwrite($fp, $key . ':' . implode(',', $values) . "\n");
+		}
+		
+		fclose($fp);
 	}
 	
 	// adds a project config file

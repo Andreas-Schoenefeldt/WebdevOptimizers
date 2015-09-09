@@ -1,9 +1,12 @@
 <?php
 	
 	date_default_timezone_set("Europe/Berlin");
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Debug/libDebug.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
+	
+	$pathToPHPShellHelpers = str_replace('//','/',dirname(__FILE__).'/') .'../../PHP-Shell-Helpers/';
+	
+	require_once($pathToPHPShellHelpers . 'CmdIO.php');
+	require_once($pathToPHPShellHelpers . 'Debug/libDebug.php');
+	require_once($pathToPHPShellHelpers . 'ComandLineTools/CmdParameterReader.php');
 	
 	$io = new CmdIO();
 	

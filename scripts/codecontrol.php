@@ -122,7 +122,7 @@
 	);
 	
 	$workingDir = getcwd();
-	$workingDirParts = explode('/', $workingDir);
+	$workingDirParts = explode(DIRECTORY_SEPARATOR, $workingDir);
 	$incidents = array('git', 'svn', 'hg');
 	$io = new CmdIO();
 	$system = '';
@@ -130,7 +130,10 @@
 	while (count($workingDirParts) > 0) {
 		
 		for ($i = 0; $i < count($incidents); $i++) {
-			if (file_exists(implode('/',$workingDirParts) . '/.' . $incidents[$i])) {
+			$fileIncident = implode('/',$workingDirParts) . '/.' . $incidents[$i];
+			// $io->out('testing ' . $fileIncident);
+			
+			if (file_exists($fileIncident)) {
 				// $io->out('this is a ' . $incidents[$i]);
 				
 				$system = $incidents[$i];
