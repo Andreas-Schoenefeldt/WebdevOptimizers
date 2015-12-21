@@ -1,1 +1,1 @@
-php /Volumes/Data/Andreas/Dropbox/Programming/fileScripts/codecontrol.php "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+php /Users/Andreas/Dropbox/Scripting/WebdevOptimizers/scripts/codecontrol.php "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"

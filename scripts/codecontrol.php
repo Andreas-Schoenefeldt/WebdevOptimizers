@@ -9,7 +9,7 @@
 	require_once($pathToPHPShellHelpers .'ComandLineTools/functions.php');
 	
 	date_operating_system_timezone_set();
-	
+
 	$params = new CmdParameterReader(
 		$argv,
 		array(

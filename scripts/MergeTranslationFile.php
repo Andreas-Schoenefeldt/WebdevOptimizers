@@ -20,7 +20,8 @@
 					'demandware' => array('name' => 'dw'),
 					'grails' => array('name' => 'g'),
 					'openCMS' => array('name' => 'ocms'),
-					'zend' => array('name' => 'z')
+					'zend' => array('name' => 'z'),
+					'requirejs' => array('name' => 'rjs')
 				),
 				
 				'description' => 'Defines the software environment of your project.'
@@ -80,6 +81,10 @@
 				$resourceFileSheme = "zend";
 				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'application'; // for now we just support the merge of one module
 				break;
+			case 'requirejs':
+				$resourceFileSheme = "requirejs";
+				$rootfolder = ($params->getVal('root')) ? $params->getVal('root') : 'nls'; // 
+				break;
 		}
 		
 		/** ----------------------------------------------------------------
@@ -89,6 +94,7 @@
 			default:
 				$class = 'ResourceFileHandler';
 				break;
+			case 'requirejs':
 			case 'zend':
 				$class = capitalise($resourceFileSheme) .'ResourceFileHandler';
 				// dynamically including the Zend parser class
