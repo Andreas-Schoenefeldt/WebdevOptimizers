@@ -1,12 +1,15 @@
 #!/usr/local/bin/php -q
 <?php
 	date_default_timezone_set("Europe/Berlin");
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/CmdIO.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/Fileparser.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/FileTranslator.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/ResourceFileHandler.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/Filehandler/staticFunctions.php');
-	require_once(str_replace('//','/',dirname(__FILE__).'/') .'../lib_php/ComandLineTools/CmdParameterReader.php');
+	
+	$pathToPHPShellHelpers = str_replace('//','/',dirname(__FILE__).'/') .'../../PHP-Shell-Helpers/';
+
+	require_once($pathToPHPShellHelpers .'CmdIO.php');
+	require_once($pathToPHPShellHelpers .'Filehandler/Fileparser.php');
+	require_once($pathToPHPShellHelpers .'Filehandler/FileTranslator.php');
+	require_once($pathToPHPShellHelpers .'Filehandler/ResourceFileHandler.php');
+	require_once($pathToPHPShellHelpers .'Filehandler/staticFunctions.php');
+	require_once($pathToPHPShellHelpers .'ComandLineTools/CmdParameterReader.php');
 	
 	
 	$params = new CmdParameterReader(
