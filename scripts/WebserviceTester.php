@@ -33,7 +33,7 @@
 
 	$devKey     = "c7921b27-f076-4d37-ba91-0a071295392a"; 
 	$password   = "Advisor1@"; 
-	$accountId  = "71e320e8-c6b7-4dfd-b59f-8d4314e65b9e"; 
+	$accountId  = "71e320e8-c6b7-4dfd-b59f-8d4314e65b9e"; // QS DE Test
 
 
 
@@ -48,10 +48,6 @@
 
 	//set the Headers of Soap Client. 
 	$client->__setSoapHeaders($header); 
-
-
-
-	// $header       = new SoapHeader("web", "APICredentials", array( 'DeveloperKey' => $devKey, 'Password' => $password ), false); 
 
 	function getRefundItem($sku, $amount, $quantity, $adjustReason) {
 		return array(
@@ -72,20 +68,34 @@
 			);
 	}
 
+	function getRefundAmount($refundItems) {
+		$result = 0;
+		
+		foreach ($refundItems as $item) {
+			$result += $item['Amount'];
+		}
+		
+		return $result;
+	}
+
+	$refundItems = array();
 	
+	// $refundItems[] = getRefundItem('3613371269289', 64.95, 1, "CustomerReturnedItem");
+	$refundItems[] = getRefundItem('3613371257262', 0, 0, "CustomerReturnedItem");
+	$refundItems[] = getRefundItem('3613371257309', 64.95, 1, "CustomerReturnedItem");
+		
+	$orderID = "84827";
+		
+	
+	// we build the call
 	$data = array( 
 		"SubmitOrderRefund" => array( 
-			// "OrderID" => "83079",
 			"accountID"        => $accountId, 
 			
 			"request" => array(
-				"OrderID" => "83079",
-				"Amount" => 64.95 * 2,
-				"RefundItems" => array(
-					// getRefundItem('3613371269289', 64.95, 1, "CustomerReturnedItem"),
-					getRefundItem('3613371279462', 64.95, 1, "CustomerReturnedItem"),
-					getRefundItem('3613371333157', 64.95, 1, "CustomerReturnedItem")
-				)
+				"OrderID" => $orderID,
+				"Amount" => getRefundAmount($refundItems),
+				"RefundItems" => $refundItems
 			)
 		) 
 	);

@@ -44,6 +44,14 @@
 				
 				'description' => 'Use this to commit your changes of the code to the repository.'
 			),
+			
+			'r' => array(
+				'name' => 'release',
+				'datatype' => 'String',
+				'default' => false,
+				
+				'description' => 'Creates a release.'
+			),
 			'add' => array(
 				'name' => 'add',
 				'datatype' => 'Boolean',
@@ -164,6 +172,10 @@
 		// commit
 		} else if ($params->getVal('c')) {
 			$cc->commit($params->getVal('m'), $params->getVal('a'), $params->getFiles());
+		// release
+		} else if ($params->getVal('r')) {
+			if (! $params->getVal('m')) $io->fatal("Please provide the m parameter to set a message");
+			$cc->release($params->getVal('r'), $params->getVal('m'));
 		// checkout
 		} else if ($params->getVal('co')) {
 			$cc->checkout($params->getFiles(), $params->getVal('b'));
