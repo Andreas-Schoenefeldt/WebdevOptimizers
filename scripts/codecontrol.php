@@ -113,6 +113,12 @@
 				'description' => 'Displays this help.'
 			),
 			
+			'f' => array(
+				'name' => 'feature',
+				'datatype' => 'String',
+				'description' => 'Creates a feature/ + name branch from the current location'
+			),
+			
 			'l' => array(
 				'name' => 'log',
 				'datatype' => 'Boolean',
@@ -172,6 +178,9 @@
 		// commit
 		} else if ($params->getVal('c')) {
 			$cc->commit($params->getVal('m'), $params->getVal('a'), $params->getFiles());
+		// feature
+		} else if ($params->getVal('f')) {
+			$cc->feature($params->getVal('f'));
 		// release
 		} else if ($params->getVal('r')) {
 			if (! $params->getVal('m')) $io->fatal("Please provide the m parameter to set a message");

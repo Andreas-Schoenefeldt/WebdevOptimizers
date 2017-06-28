@@ -31,7 +31,7 @@
 				'name' => 'fileToMerge',
 				'datatype' => 'String',
 				'description' => 'The csv file to merge or to export, if the export parameter is given. If export all is given, there should be a export folder be defined at this place',
-				'required' => true
+				'required' => false
 			),
 			
 			'x' => array(
@@ -48,6 +48,20 @@
 				'required' => false
 			),
 			
+			'c' => array(
+				'name' => 'compare',
+				'datatype' => 'String',
+				'description' => 'compares two or more locations, seperate the root folder names with a space - "app_ui app_qs_ui"',
+				'required' => false
+			),
+        
+            'force' => array(
+                'name' => 'force',
+				'datatype' => 'Boolean',
+				'description' => 'does not ask for permission or user input',
+				'required' => false
+            ),
+			
 			'root' => array(
 				'name' => 'r',
 				'datatype' => 'String',
@@ -63,6 +77,8 @@
 	if(!$fileToTranslate){
 		$params->print_usage();
 	} else {
+        
+        $forceMode = $params->getVal('force');
 		
 		$resourceFileSheme = "Java";
 		
@@ -127,7 +143,7 @@
 		
 		// parse all the keyfiles and build up the translation map and localisationFiles
 		recurseIntoFolderContent($appRootPath, $appRootPath, function($filepath, $baseDirectory){
-			global $resourceFileHandler, $config, $appRootPath;
+			global $resourceFileHandler, $config, $appRootPath, $io;
 			
 			$parts = explode('/', str_replace($appRootPath, '', $filepath));
 			
@@ -141,8 +157,91 @@
 		}
 		
 		$exportAll = $params->getVal('xa');
+		$compare = explode(' ', $params->getVal('c'));
 		
-		if ($exportAll || $params->getVal('x')) {
+		if(count($compare) > 1) {
+			
+			$targetNS = $compare[0];
+			$mergeNS = $compare[1];	
+			
+			$io->out("\n> Comparing $mergeNS to $targetNS");
+			
+			$newKeys = array();
+			$differentKeys = array();
+			
+			foreach ($resourceFileHandler->localisationMap as $namespace => $cartridges) {
+				
+				if ($namespace != 'brand') {
+				
+					$targets = array_key_exists($targetNS, $cartridges) ? $cartridges[$targetNS] : null;
+					$merges = array_key_exists($mergeNS, $cartridges) ? $cartridges[$mergeNS] : null;
+
+					if($merges){
+
+						foreach ($merges as $locale => $keyConf) {
+
+							foreach($keyConf['keys'] as $key => $value) {
+
+								// checking if we have a new key
+								if (!$targets || !array_key_exists($locale, $targets) || ! array_key_exists($key, $targets[$locale]['keys'])) {
+									$newKeys[$namespace][$targetNS][$locale][$key] = $value;
+									$resourceFileHandler->removeKeyForFile($namespace, $key, $mergeNS, $locale);	
+									$resourceFileHandler->setKeyForFile($namespace, $key, $value, $targetNS, $locale);
+								} else if ($targets) {
+									// is it a different key?
+									if ($value != $targets[$locale]['keys'][$key]) {
+										
+										$differentKeys[$namespace][$mergeNS][$locale][$key] = $value;
+										$differentKeys[$namespace][$targetNS][$locale][$key] = $targets[$locale]['keys'][$key];
+										
+										switch($io->read("Different values of $key ($locale) \n x: $value ($mergeNS)\n y: {$targets[$locale]['keys'][$key]} ($targetNS)\n z: - remove key in project -\n any other key: keep both\n")){
+											default:
+												break;
+											case 'x':
+												// we take the one from the merge file
+												$resourceFileHandler->removeKeyForFile($namespace, $key, $mergeNS, $locale);
+												$resourceFileHandler->setKeyForFile($namespace, $key, $value, $targetNS, $locale);
+												$newKeys[$namespace][$targetNS][$locale][$key] = $value;
+												break;
+											case 'y':
+												$resourceFileHandler->removeKeyForFile($namespace, $key, $mergeNS, $locale);
+												break;
+											case 'z':
+												$resourceFileHandler->removeKeyForAll($namespace, $key);
+												break;
+										}
+									} else {
+										// it is a existing key, we just remove it from the merge
+										$resourceFileHandler->removeKeyForFile($namespace, $key, $mergeNS, $locale);	
+									}
+								} else {
+									die('no target no merge?');
+								}
+							}
+
+						}
+					} else {
+						$io->out("  > Ignoring $namespace, because no such file exists in $mergeNS");
+					}
+				}
+				
+			}
+			
+			print_r($newKeys);
+			
+			if ($forceMode || $io->confirm('Would you like to import the above new keys into ' . $targetNS . '?')){
+				
+				$resourceFileHandler->printChangedResourceFiles(true);
+				
+				if ($io->confirm('Looks alright?')){
+					$resourceFileHandler->printChangedResourceFiles();
+				}
+			}
+			
+			
+			die();
+			
+		} else if ($exportAll || $params->getVal('x')) {
 			
 			$namespaces = $exportAll ? array_keys($resourceFileHandler->localisationMap) : array($params->getVal('x'));
 			
@@ -332,7 +431,9 @@
 			fclose($mergefile);
 			$resourceFileHandler->mergeKeyFileExtract($mergeKeys);
 			
-			if ($resourceFileHandler->printChangedResourceFiles(true)){	
+            if ($forceMode) {
+                $resourceFileHandler->printChangedResourceFiles();
+            } else if ($resourceFileHandler->printChangedResourceFiles(true)){	
 				if ($io->readStdInn("Would you like to print the updated resource files (y/N)?") == 'y') { 
 					// print the resource files
 					$resourceFileHandler->printChangedResourceFiles();
