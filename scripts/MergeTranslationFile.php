@@ -69,7 +69,7 @@
 				'description' => 'If the Root Folder of the Project differ from the environments default, you can add this here.'
 			),
 		),
-		'A script to parse a IT project and inject new i18n keys into the appropriate resource files. The cells of the csv have to be separated with , and you need the headlines in the file: default, fr, es, de for example.'
+		'A script to parse a IT project and inject new i18n keys into the appropriate resource files. The cells of the csv have to be separated with , and you need the headlines in the file: default, fr, es, de for example.' . "\n\n" . 'Usage examples:' . "\n" . ' - Export all resources to folder /Users/Andreas/Desktop/log: $ php MergeTranslationFile.php -xa -f /Users/Andreas/Desktop/log cartridges' 
 	);
 	
 	$fileToTranslate = $params->getFileName();
