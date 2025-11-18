@@ -3,3 +3,6 @@
 config.php
 fileScripts/AnalyseLogfiles/
 fileScripts/Analytics/
+
+# IDE
+.idea

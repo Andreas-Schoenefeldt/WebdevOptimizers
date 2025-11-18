@@ -105,6 +105,14 @@
 				
 				'description' => 'Pass also the branch you want to merge'
 			),
+
+            'mr' => [
+                'name' => 'merge-request',
+                'datatype' => 'String',
+                'description' => 'Creates a merge request of the current branch against the given branch. It defaults to develop',
+                'default' => 'develop',
+                'only_fill_if_present' => true
+            ],
 			
 			'h' => array(
 				'name' => 'help',
@@ -196,7 +204,10 @@
 			$cc->version();
 		// log
 		} else if ($params->getVal('l')) {
-			$cc->log($params->getVal('l'));
+            $cc->log($params->getVal('l'));
+        // merge request
+        } else if ($params->getVal('mr')) {
+            $cc->mergeRequest($params->getVal('mr'));
 		// add
 		} else if ($params->getVal('add')) {
 			$cc->add($params->getFiles());
