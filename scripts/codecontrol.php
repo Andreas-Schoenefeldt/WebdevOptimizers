@@ -109,8 +109,7 @@
             'mr' => [
                 'name' => 'merge-request',
                 'datatype' => 'String',
-                'description' => 'Creates a merge request of the current branch against the given branch. It defaults to develop',
-                'default' => 'develop',
+                'description' => 'Creates a merge request of the current branch against the given branch. It defaults to the current defaultBranch, if it can be identified',
                 'only_fill_if_present' => true
             ],
 			
