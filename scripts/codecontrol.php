@@ -110,13 +110,14 @@
                 'name' => 'merge-request',
                 'datatype' => 'String',
                 'description' => 'Creates a merge request of the current branch against the given branch. It defaults to the current defaultBranch, if it can be identified',
-                'only_fill_if_present' => true
+                'only_fill_if_present' => true,
+                'default' => true,
+                'required' => false,
             ],
 			
 			'h' => array(
 				'name' => 'help',
 				'datatype' => 'Boolean',
-				
 				'description' => 'Displays this help.'
 			),
 			
@@ -129,7 +130,6 @@
 			'l' => array(
 				'name' => 'log',
 				'datatype' => 'Boolean',
-				
 				'description' => 'Shows the log of the repository.'
 			),
 			
